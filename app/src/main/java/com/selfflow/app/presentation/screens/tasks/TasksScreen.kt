@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+
 package com.selfflow.app.presentation.screens.tasks
 
 import androidx.compose.foundation.clickable
