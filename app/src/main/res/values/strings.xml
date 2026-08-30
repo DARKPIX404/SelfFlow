@@ -1,0 +1,190 @@
+<resources>
+    <string name="app_name">SelfFlow</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Главная</string>
+    <string name="nav_routine">Распорядок</string>
+    <string name="nav_tasks">Задачи</string>
+    <string name="nav_notes">Заметки</string>
+    <string name="nav_calendar">Календарь</string>
+    <string name="nav_alarm">Будильник</string>
+    <string name="nav_settings">Настройки</string>
+
+    <!-- Common actions -->
+    <string name="save">Сохранить</string>
+    <string name="cancel">Отмена</string>
+    <string name="delete">Удалить</string>
+    <string name="edit">Изменить</string>
+    <string name="add">Добавить</string>
+    <string name="search">Поиск</string>
+    <string name="ok">OK</string>
+    <string name="close">Закрыть</string>
+    <string name="next">Далее</string>
+    <string name="apply">Применить</string>
+
+    <!-- Widget -->
+    <string name="widget_loading">Загрузка…</string>
+    <string name="widget_next_routine_label">Ближайшая рутина:</string>
+    <string name="widget_remaining_tasks">Осталось задач: %1$d</string>
+
+    <!-- Home -->
+    <string name="home_today_title">Сегодня</string>
+    <string name="home_next_routine_title">Следующий распорядок</string>
+    <string name="home_no_routine">—</string>
+    <string name="home_today_tasks_title">Задачи на сегодня</string>
+    <string name="home_alarm_button">Будильник</string>
+    <string name="home_settings_button">Настройки</string>
+    <string name="home_statistics_title">Статистика</string>
+
+    <!-- Status -->
+    <string name="status_todo">К выполнению</string>
+    <string name="status_in_progress">В работе</string>
+    <string name="status_done">Выполнено</string>
+
+    <!-- Priority -->
+    <string name="priority_low">Низкий</string>
+    <string name="priority_medium">Средний</string>
+    <string name="priority_high">Высокий</string>
+
+    <!-- Routine -->
+    <string name="routine_screen_title">Распорядок дня</string>
+    <string name="add_routine_content_description">Добавить распорядок</string>
+    <string name="routine_empty_state">Нет распорядков. Нажмите +, чтобы добавить.</string>
+    <string name="routine_active">Активен</string>
+    <string name="routine_inactive">Неактивен</string>
+    <string name="routine_dialog_title_new">Новый распорядок</string>
+    <string name="routine_dialog_title_edit">Редактировать распорядок</string>
+    <string name="routine_title_label">Название</string>
+    <string name="routine_description_label">Описание</string>
+    <string name="routine_start_time_button">Начало: %1$s</string>
+    <string name="routine_end_time_button">Конец: %1$s</string>
+    <string name="routine_recurrence_label">Повторение</string>
+    <string name="routine_recurrence_display">Повторение: %1$s</string>
+    <string name="routine_notification_label">Текст уведомления</string>
+    <string name="routine_active_label">Активен</string>
+
+    <!-- Recurrence -->
+    <string name="recurrence_none">Нет</string>
+    <string name="recurrence_daily">Ежедневно</string>
+    <string name="recurrence_weekdays">По будням</string>
+    <string name="recurrence_weekly">Еженедельно</string>
+
+    <!-- Templates -->
+    <string name="templates_title">Шаблоны</string>
+    <string name="template_name_label">Название шаблона</string>
+    <string name="save_as_template_button">Сохранить как шаблон</string>
+    <string name="templates_empty">Нет сохранённых шаблонов</string>
+
+    <!-- Tasks -->
+    <string name="tasks_title">Задачи</string>
+    <string name="add_task_content_description">Добавить задачу</string>
+    <string name="task_status_filter_all">Все</string>
+    <string name="task_routine_prefix">Распорядок: %1$s</string>
+    <string name="task_dialog_title_new">Новая задача</string>
+    <string name="task_dialog_title_edit">Редактировать задачу</string>
+    <string name="task_title_label">Название</string>
+    <string name="task_description_label">Описание</string>
+    <string name="task_priority_label">Приоритет</string>
+    <string name="task_status_label">Статус</string>
+    <string name="task_routine_label">Распорядок</string>
+    <string name="task_no_routine">Без привязки</string>
+    <string name="task_due_date_dialog_title">Время</string>
+
+    <!-- Notes -->
+    <string name="notes_title">Заметки</string>
+    <string name="add_note_content_description">Добавить заметку</string>
+    <string name="search_notes_hint">Поиск заметок</string>
+    <string name="notes_empty">Нет заметок</string>
+    <string name="notes_search_empty">Ничего не найдено</string>
+    <string name="note_dialog_title_new">Новая заметка</string>
+    <string name="note_dialog_title_edit">Редактировать заметку</string>
+    <string name="note_title_label">Заголовок</string>
+    <string name="note_content_label">Текст</string>
+    <string name="note_tags_label">Теги через запятую</string>
+    <string name="untitled_note">Без названия</string>
+    <string name="delete_note_content_description">Удалить заметку</string>
+
+    <!-- Calendar -->
+    <string name="calendar_title">Календарь</string>
+    <string name="previous_month_content_description">Предыдущий месяц</string>
+    <string name="next_month_content_description">Следующий месяц</string>
+    <string name="calendar_no_events">Нет событий</string>
+    <string name="calendar_routines_section">Распорядок</string>
+    <string name="calendar_tasks_section">Задачи</string>
+    <string name="calendar_notes_section">Заметки</string>
+    <string name="calendar_status_in_progress">В процессе</string>
+    <string name="calendar_status_done">Готово</string>
+
+    <string-array name="month_names">
+        <item>Январь</item>
+        <item>Февраль</item>
+        <item>Март</item>
+        <item>Апрель</item>
+        <item>Май</item>
+        <item>Июнь</item>
+        <item>Июль</item>
+        <item>Август</item>
+        <item>Сентябрь</item>
+        <item>Октябрь</item>
+        <item>Ноябрь</item>
+        <item>Декабрь</item>
+    </string-array>
+
+    <string-array name="week_days">
+        <item>Пн</item>
+        <item>Вт</item>
+        <item>Ср</item>
+        <item>Чт</item>
+        <item>Пт</item>
+        <item>Сб</item>
+        <item>Вс</item>
+    </string-array>
+
+    <!-- Alarm -->
+    <string name="alarm_title">Будильник</string>
+    <string name="alarm_wake_label">Пробуждение</string>
+    <string name="alarm_sleep_label">Сон</string>
+    <string name="alarm_enabled">Будильник включён</string>
+    <string name="alarm_disabled">Будильник выключен</string>
+    <string name="overlay_permission_button">Разрешение поверх других приложений</string>
+    <string name="notification_permission_button">Разрешить уведомления</string>
+    <string name="alarm_test_button">Проверить будильник и оверлей</string>
+    <string name="wake_alarm_content">Время просыпаться!</string>
+    <string name="sleep_alarm_content">Время отдыхать!</string>
+    <string name="alarm_notification_denied_snackbar">Без уведомлений будильник не сработает корректно</string>
+    <string name="overlay_settings_error_snackbar">Невозможно открыть настройки</string>
+    <string name="notification_rationale_snackbar">Уведомления нужны для показа будильника</string>
+    <string name="alarm_needs_notification_snackbar">Сначала разрешите уведомления</string>
+    <string name="alarm_needs_overlay_snackbar">Сначала разрешите оверлей</string>
+    <string name="overlay_dismiss_button">Отключить</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Настройки</string>
+    <string name="settings_day_mode_section">Режим дня</string>
+    <string name="settings_wake_time_label">Время пробуждения</string>
+    <string name="settings_sleep_time_label">Время сна</string>
+    <string name="settings_dynamic_theme">Динамическая тема</string>
+    <string name="settings_data_section">Данные</string>
+    <string name="settings_export_button">Экспорт</string>
+    <string name="settings_import_button">Импорт</string>
+    <string name="export_success">Экспортировано записей: %1$d</string>
+    <string name="export_error">Ошибка экспорта: %1$s</string>
+    <string name="import_success">Импортировано записей: %1$d</string>
+    <string name="import_error">Ошибка импорта: %1$s</string>
+    <string name="alarm_test_content">Тестовый будильник</string>
+    <string name="settings_language_section">Язык</string>
+    <string name="settings_wake_time_picker_title">Время пробуждения</string>
+    <string name="settings_sleep_time_picker_title">Время сна</string>
+    <string name="settings_change_button">Изменить</string>
+
+    <!-- Statistics -->
+    <string name="statistics_title">Статистика</string>
+    <string name="stats_task_completion_title">Выполнение задач</string>
+    <string name="stats_completed_out_of">Выполнено %1$d из %2$d</string>
+    <string name="stats_status_distribution_title">Задачи по статусу</string>
+    <string name="stats_priority_distribution_title">Распределение по приоритету</string>
+    <string name="stats_routines_title">Распорядки</string>
+    <string name="stats_routines_today">Запланировано сегодня</string>
+    <string name="stats_routines_completed">Завершено</string>
+    <string name="stats_notes_title">Заметки</string>
+</resources>
