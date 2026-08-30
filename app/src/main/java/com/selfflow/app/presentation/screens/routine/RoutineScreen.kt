@@ -16,18 +16,14 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.Card
-import androidx.compose.material3.DismissDirection
-import androidx.compose.material3.DismissValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SwipeToDismiss
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberDismissState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -39,7 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.selfflow.app.R
 import com.selfflow.app.domain.model.RecurrenceRule
 import com.selfflow.app.domain.model.Routine
-import com.selfflow.app.presentation.components.RecurrenceRule.toDisplayName
+import com.selfflow.app.presentation.components.toDisplayName
 import com.selfflow.app.presentation.components.RoutineFormDialog
 import com.selfflow.app.presentation.components.TemplateDialog
 import com.selfflow.app.presentation.viewmodel.RoutineViewModel
@@ -158,38 +154,10 @@ private fun RoutineListItem(
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
-    val dismissState = rememberDismissState(
-        confirmValueChange = { value ->
-            if (value == DismissValue.DismissedToStart || value == DismissValue.DismissedToEnd) {
-                onDelete()
-                true
-            } else {
-                false
-            }
-        }
-    )
-
-    SwipeToDismiss(
-        state = dismissState,
-        directions = setOf(DismissDirection.EndToStart),
-        background = {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.errorContainer)
-                    .padding(horizontal = 16.dp),
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = stringResource(R.string.delete),
-                    tint = MaterialTheme.colorScheme.onErrorContainer
-                )
-            }
-        },
-        dismissContent = {
-            RoutineCard(routine = routine, onClick = onClick)
-        }
+    RoutineCard(
+        routine = routine,
+        onClick = onClick,
+        onDelete = onDelete
     )
 }
 
@@ -197,7 +165,8 @@ private fun RoutineListItem(
 @Composable
 private fun RoutineCard(
     routine: Routine,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onDelete: () -> Unit = {}
 ) {
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
     val start = LocalDateTime.ofInstant(routine.startTime, ZoneId.systemDefault())
@@ -210,43 +179,56 @@ private fun RoutineCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            RowInfo(
-                title = routine.title,
-                badge = if (routine.isActive) {
-                    stringResource(R.string.routine_active)
-                } else {
-                    stringResource(R.string.routine_inactive)
-                }
-            )
-
-            if (routine.description.isNotBlank()) {
-                Text(
-                    text = routine.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                RowInfo(
+                    title = routine.title,
+                    badge = if (routine.isActive) {
+                        stringResource(R.string.routine_active)
+                    } else {
+                        stringResource(R.string.routine_inactive)
+                    }
                 )
+
+                if (routine.description.isNotBlank()) {
+                    Text(
+                        text = routine.description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Text(
+                    text = if (end != null) "$start — $end" else start,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                if (routine.recurrenceRule != RecurrenceRule.NONE) {
+                    Text(
+                        text = stringResource(
+                            R.string.routine_recurrence_display,
+                            routine.recurrenceRule.toDisplayName()
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
-            Text(
-                text = if (end != null) "$start — $end" else start,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            if (routine.recurrenceRule != RecurrenceRule.NONE) {
-                Text(
-                    text = stringResource(
-                        R.string.routine_recurrence_display,
-                        routine.recurrenceRule.toDisplayName()
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            IconButton(onClick = onDelete) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = stringResource(R.string.delete),
+                    tint = MaterialTheme.colorScheme.error
                 )
             }
         }
