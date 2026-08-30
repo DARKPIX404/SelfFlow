@@ -472,6 +472,9 @@ private fun PinCreationDialog(
     var confirmPin by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
 
+    val pinInvalidLength = stringResource(R.string.pin_invalid_length)
+    val pinMismatch = stringResource(R.string.pin_mismatch)
+
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
@@ -479,10 +482,10 @@ private fun PinCreationDialog(
                 onClick = {
                     when {
                         pin.length != PIN_LENGTH || pin.any { !it.isDigit() } -> {
-                            error = stringResource(R.string.pin_invalid_length)
+                            error = pinInvalidLength
                         }
                         pin != confirmPin -> {
-                            error = stringResource(R.string.pin_mismatch)
+                            error = pinMismatch
                         }
                         else -> {
                             onPinSet(pin)
