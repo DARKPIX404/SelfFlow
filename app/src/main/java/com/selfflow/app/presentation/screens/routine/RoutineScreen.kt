@@ -1,0 +1,276 @@
+package com.selfflow.app.presentation.screens.routine
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material3.Card
+import androidx.compose.material3.DismissDirection
+import androidx.compose.material3.DismissValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SwipeToDismiss
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDismissState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.selfflow.app.R
+import com.selfflow.app.domain.model.RecurrenceRule
+import com.selfflow.app.domain.model.Routine
+import com.selfflow.app.presentation.components.RecurrenceRule.toDisplayName
+import com.selfflow.app.presentation.components.RoutineFormDialog
+import com.selfflow.app.presentation.components.TemplateDialog
+import com.selfflow.app.presentation.viewmodel.RoutineViewModel
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RoutineScreen(
+    viewModel: RoutineViewModel = hiltViewModel()
+) {
+    val routines by viewModel.routines.collectAsStateWithLifecycle()
+    val templates by viewModel.templates.collectAsStateWithLifecycle()
+    val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
+    val templateDialogOpen by viewModel.templateDialogOpen.collectAsStateWithLifecycle()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.routine_screen_title)) },
+                actions = {
+                    IconButton(onClick = viewModel::showTemplateDialog) {
+                        Icon(
+                            imageVector = Icons.Default.List,
+                            contentDescription = stringResource(R.string.templates_title)
+                        )
+                    }
+                }
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = viewModel::showAddDialog) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = stringResource(R.string.add_routine_content_description)
+                )
+            }
+        }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            if (routines.isEmpty()) {
+                EmptyState(modifier = Modifier.align(Alignment.Center))
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(
+                        items = routines,
+                        key = { it.id }
+                    ) { routine ->
+                        RoutineListItem(
+                            routine = routine,
+                            onClick = { viewModel.showEditDialog(routine) },
+                            onDelete = { viewModel.deleteRoutine(routine) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    when (val state = dialogState) {
+        is RoutineViewModel.RoutineDialogState.Visible -> {
+            RoutineFormDialog(
+                routine = state.routine,
+                onDismiss = viewModel::dismissDialog,
+                onSave = viewModel::saveRoutine
+            )
+        }
+
+        else -> Unit
+    }
+
+    if (templateDialogOpen) {
+        val currentRoutine = (dialogState as? RoutineViewModel.RoutineDialogState.Visible)?.routine
+            ?: Routine(
+                title = "",
+                startTime = Instant.now(),
+                endTime = Instant.now().plusSeconds(3_600),
+                recurrenceRule = RecurrenceRule.NONE
+            )
+
+        TemplateDialog(
+            currentRoutine = currentRoutine,
+            templates = templates,
+            onDismiss = viewModel::dismissTemplateDialog,
+            onSaveTemplate = viewModel::saveTemplate,
+            onApplyTemplate = viewModel::applyTemplate,
+            onDeleteTemplate = viewModel::deleteTemplate
+        )
+    }
+}
+
+@Composable
+private fun EmptyState(modifier: Modifier = Modifier) {
+    Text(
+        text = stringResource(R.string.routine_empty_state),
+        style = MaterialTheme.typography.bodyLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier.padding(horizontal = 32.dp)
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RoutineListItem(
+    routine: Routine,
+    onClick: () -> Unit,
+    onDelete: () -> Unit
+) {
+    val dismissState = rememberDismissState(
+        confirmValueChange = { value ->
+            if (value == DismissValue.DismissedToStart || value == DismissValue.DismissedToEnd) {
+                onDelete()
+                true
+            } else {
+                false
+            }
+        }
+    )
+
+    SwipeToDismiss(
+        state = dismissState,
+        directions = setOf(DismissDirection.EndToStart),
+        background = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.errorContainer)
+                    .padding(horizontal = 16.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = stringResource(R.string.delete),
+                    tint = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+        },
+        dismissContent = {
+            RoutineCard(routine = routine, onClick = onClick)
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RoutineCard(
+    routine: Routine,
+    onClick: () -> Unit
+) {
+    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+    val start = LocalDateTime.ofInstant(routine.startTime, ZoneId.systemDefault())
+        .format(timeFormatter)
+    val end = routine.endTime?.let {
+        LocalDateTime.ofInstant(it, ZoneId.systemDefault()).format(timeFormatter)
+    }
+
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            RowInfo(
+                title = routine.title,
+                badge = if (routine.isActive) {
+                    stringResource(R.string.routine_active)
+                } else {
+                    stringResource(R.string.routine_inactive)
+                }
+            )
+
+            if (routine.description.isNotBlank()) {
+                Text(
+                    text = routine.description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Text(
+                text = if (end != null) "$start — $end" else start,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            if (routine.recurrenceRule != RecurrenceRule.NONE) {
+                Text(
+                    text = stringResource(
+                        R.string.routine_recurrence_display,
+                        routine.recurrenceRule.toDisplayName()
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RowInfo(
+    title: String,
+    badge: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium
+        )
+        Text(
+            text = badge,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+}
