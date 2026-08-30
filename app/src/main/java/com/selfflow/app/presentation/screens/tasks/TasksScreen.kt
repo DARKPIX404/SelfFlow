@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -47,6 +48,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -56,6 +59,7 @@ import com.selfflow.app.domain.model.Priority
 import com.selfflow.app.domain.model.Routine
 import com.selfflow.app.domain.model.Status
 import com.selfflow.app.domain.model.Task
+import com.selfflow.app.presentation.components.EmptyState
 import com.selfflow.app.presentation.viewmodel.TaskDialogState
 import com.selfflow.app.presentation.viewmodel.TasksViewModel
 import java.time.Instant
@@ -71,6 +75,7 @@ fun TasksScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
+    val haptic = LocalHapticFeedback.current
 
     Scaffold(
         topBar = {
@@ -98,19 +103,32 @@ fun TasksScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(bottom = 88.dp)
-            ) {
-                items(uiState.tasks, key = { it.id }) { task ->
-                    TaskListItem(
-                        task = task,
-                        routine = uiState.routines.find { it.id == task.routineId },
-                        onClick = { viewModel.openEditDialog(task) },
-                        onToggleStatus = { viewModel.toggleStatus(task) },
-                        onDelete = { viewModel.deleteTask(task) }
-                    )
+            if (uiState.tasks.isEmpty()) {
+                EmptyState(
+                    icon = Icons.Default.List,
+                    title = stringResource(R.string.tasks_empty_title),
+                    description = stringResource(R.string.tasks_empty_description),
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(bottom = 88.dp)
+                ) {
+                    items(uiState.tasks, key = { it.id }) { task ->
+                        TaskListItem(
+                            task = task,
+                            routine = uiState.routines.find { it.id == task.routineId },
+                            onClick = { viewModel.openEditDialog(task) },
+                            onToggleStatus = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                viewModel.toggleStatus(task)
+                            },
+                            onDelete = { viewModel.deleteTask(task) },
+                            modifier = Modifier.animateItemPlacement()
+                        )
+                    }
                 }
             }
         }
@@ -163,10 +181,11 @@ private fun TaskListItem(
     routine: Routine?,
     onClick: () -> Unit,
     onToggleStatus: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
     ) {
@@ -238,6 +257,12 @@ private fun StatusChip(status: Status, onClick: () -> Unit) {
             enabled = true,
             selected = status != Status.TODO,
             borderColor = color
+        ),
+        colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
+            selectedContainerColor = color.copy(alpha = 0.16f),
+            selectedLabelColor = color,
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            labelColor = color
         )
     )
 }

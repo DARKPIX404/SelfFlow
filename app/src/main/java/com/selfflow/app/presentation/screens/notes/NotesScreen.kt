@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -45,6 +46,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.selfflow.app.R
 import com.selfflow.app.domain.model.Note
+import com.selfflow.app.presentation.components.EmptyState
 import com.selfflow.app.presentation.viewmodel.NotesViewModel
 import java.time.Instant
 
@@ -102,20 +104,20 @@ fun NotesScreen(viewModel: NotesViewModel = hiltViewModel()) {
             Spacer(modifier = Modifier.height(12.dp))
 
             if (notes.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = if (query.isBlank()) {
-                            stringResource(R.string.notes_empty)
-                        } else {
-                            stringResource(R.string.notes_search_empty)
-                        },
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                EmptyState(
+                    icon = Icons.Default.Edit,
+                    title = if (query.isBlank()) {
+                        stringResource(R.string.notes_empty_title)
+                    } else {
+                        stringResource(R.string.notes_search_empty_title)
+                    },
+                    description = if (query.isBlank()) {
+                        stringResource(R.string.notes_empty)
+                    } else {
+                        stringResource(R.string.notes_search_empty)
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
             } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -131,7 +133,8 @@ fun NotesScreen(viewModel: NotesViewModel = hiltViewModel()) {
                                 editingNote = note
                                 showDialog = true
                             },
-                            onDelete = { viewModel.deleteNote(note) }
+                            onDelete = { viewModel.deleteNote(note) },
+                            modifier = Modifier.animateItemPlacement()
                         )
                     }
                 }

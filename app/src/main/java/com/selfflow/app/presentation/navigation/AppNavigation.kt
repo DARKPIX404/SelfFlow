@@ -1,5 +1,9 @@
 package com.selfflow.app.presentation.navigation
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -20,6 +24,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -39,6 +44,18 @@ private data class BottomNavItem(
     val labelRes: Int,
     val icon: ImageVector
 )
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.slideIn() =
+    fadeIn() + slideInHorizontally { it / 5 }
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.slideOut() =
+    fadeOut() + slideOutHorizontally { -it / 5 }
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.popSlideIn() =
+    fadeIn() + slideInHorizontally { -it / 5 }
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.popSlideOut() =
+    fadeOut() + slideOutHorizontally { it / 5 }
 
 private val bottomNavItems = listOf(
     BottomNavItem(Screen.Home.route, R.string.nav_home, Icons.Default.Home),
@@ -86,20 +103,68 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
             startDestination = Screen.Home.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(Screen.Home.route) {
+            composable(
+                route = Screen.Home.route,
+                enterTransition = { slideIn() },
+                exitTransition = { slideOut() },
+                popEnterTransition = { popSlideIn() },
+                popExitTransition = { popSlideOut() }
+            ) {
                 HomeScreen(
                     onNavigateToAlarm = { navController.navigate(Screen.Alarm.route) },
                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                     onNavigateToStatistics = { navController.navigate(Screen.Statistics.route) }
                 )
             }
-            composable(Screen.Routine.route) { RoutineScreen() }
-            composable(Screen.Tasks.route) { TasksScreen() }
-            composable(Screen.Notes.route) { NotesScreen() }
-            composable(Screen.Calendar.route) { CalendarScreen() }
-            composable(Screen.Alarm.route) { AlarmScreen() }
-            composable(Screen.Settings.route) { SettingsScreen() }
-            composable(Screen.Statistics.route) { StatisticsScreen() }
+            composable(
+                route = Screen.Routine.route,
+                enterTransition = { slideIn() },
+                exitTransition = { slideOut() },
+                popEnterTransition = { popSlideIn() },
+                popExitTransition = { popSlideOut() }
+            ) { RoutineScreen() }
+            composable(
+                route = Screen.Tasks.route,
+                enterTransition = { slideIn() },
+                exitTransition = { slideOut() },
+                popEnterTransition = { popSlideIn() },
+                popExitTransition = { popSlideOut() }
+            ) { TasksScreen() }
+            composable(
+                route = Screen.Notes.route,
+                enterTransition = { slideIn() },
+                exitTransition = { slideOut() },
+                popEnterTransition = { popSlideIn() },
+                popExitTransition = { popSlideOut() }
+            ) { NotesScreen() }
+            composable(
+                route = Screen.Calendar.route,
+                enterTransition = { slideIn() },
+                exitTransition = { slideOut() },
+                popEnterTransition = { popSlideIn() },
+                popExitTransition = { popSlideOut() }
+            ) { CalendarScreen() }
+            composable(
+                route = Screen.Alarm.route,
+                enterTransition = { slideIn() },
+                exitTransition = { slideOut() },
+                popEnterTransition = { popSlideIn() },
+                popExitTransition = { popSlideOut() }
+            ) { AlarmScreen() }
+            composable(
+                route = Screen.Settings.route,
+                enterTransition = { slideIn() },
+                exitTransition = { slideOut() },
+                popEnterTransition = { popSlideIn() },
+                popExitTransition = { popSlideOut() }
+            ) { SettingsScreen() }
+            composable(
+                route = Screen.Statistics.route,
+                enterTransition = { slideIn() },
+                exitTransition = { slideOut() },
+                popEnterTransition = { popSlideIn() },
+                popExitTransition = { popSlideOut() }
+            ) { StatisticsScreen() }
         }
     }
 }

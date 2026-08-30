@@ -49,6 +49,7 @@
     <!-- Routine -->
     <string name="routine_screen_title">Распорядок дня</string>
     <string name="add_routine_content_description">Добавить распорядок</string>
+    <string name="routine_empty_title">Нет распорядков</string>
     <string name="routine_empty_state">Нет распорядков. Нажмите +, чтобы добавить.</string>
     <string name="routine_active">Активен</string>
     <string name="routine_inactive">Неактивен</string>
@@ -78,6 +79,8 @@
     <!-- Tasks -->
     <string name="tasks_title">Задачи</string>
     <string name="add_task_content_description">Добавить задачу</string>
+    <string name="tasks_empty_title">Нет задач</string>
+    <string name="tasks_empty_description">Нажмите +, чтобы добавить первую задачу</string>
     <string name="task_status_filter_all">Все</string>
     <string name="task_routine_prefix">Распорядок: %1$s</string>
     <string name="task_dialog_title_new">Новая задача</string>
@@ -94,7 +97,9 @@
     <string name="notes_title">Заметки</string>
     <string name="add_note_content_description">Добавить заметку</string>
     <string name="search_notes_hint">Поиск заметок</string>
+    <string name="notes_empty_title">Нет заметок</string>
     <string name="notes_empty">Нет заметок</string>
+    <string name="notes_search_empty_title">Ничего не найдено</string>
     <string name="notes_search_empty">Ничего не найдено</string>
     <string name="note_dialog_title_new">Новая заметка</string>
     <string name="note_dialog_title_edit">Редактировать заметку</string>
@@ -181,6 +186,7 @@
     <string name="easter_egg_title">Пасхалка!</string>
     <string name="easter_egg_yandex_button">Открыть альбом на Яндекс Диске</string>
     <string name="easter_egg_close">Закрыть</string>
+    <string name="easter_egg_password_hint">Пароль к альбому: дата начала наших отношений (ДДММГГГГ)</string>
 
     <!-- Statistics -->
     <string name="statistics_title">Статистика</string>
