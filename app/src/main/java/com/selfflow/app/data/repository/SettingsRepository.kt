@@ -3,6 +3,7 @@ package com.selfflow.app.data.repository
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import com.selfflow.app.data.alarm.RingtoneOption
 import com.selfflow.app.data.preferences.PreferencesKeys
 import java.time.LocalTime
 import javax.inject.Inject
@@ -32,6 +33,10 @@ class SettingsRepository @Inject constructor(
         preferences[PreferencesKeys.ALARM_ENABLED] ?: true
     }
 
+    val alarmRingtone: Flow<RingtoneOption> = dataStore.data.map { preferences ->
+        RingtoneOption.fromKey(preferences[PreferencesKeys.ALARM_RINGTONE])
+    }
+
     suspend fun setWakeTime(time: LocalTime) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.WAKE_TIME] = time.toString()
@@ -53,6 +58,12 @@ class SettingsRepository @Inject constructor(
     suspend fun setAlarmEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.ALARM_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setAlarmRingtone(option: RingtoneOption) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.ALARM_RINGTONE] = option.key
         }
     }
 

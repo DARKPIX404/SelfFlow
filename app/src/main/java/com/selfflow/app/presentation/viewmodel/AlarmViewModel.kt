@@ -6,6 +6,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.selfflow.app.R
+import com.selfflow.app.data.alarm.RingtoneOption
 import com.selfflow.app.data.repository.SettingsRepository
 import com.selfflow.app.service.alarm.AlarmScheduler
 import com.selfflow.app.service.alarm.AlarmService
@@ -45,6 +46,13 @@ class AlarmViewModel @Inject constructor(
             initialValue = true
         )
 
+    val alarmRingtone: StateFlow<RingtoneOption> = settingsRepository.alarmRingtone
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000L),
+            initialValue = RingtoneOption.SYSTEM_DEFAULT
+        )
+
     fun setAlarmEnabled(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.setAlarmEnabled(enabled)
@@ -57,6 +65,12 @@ class AlarmViewModel @Inject constructor(
                 alarmScheduler.cancelWakeAlarm()
                 alarmScheduler.cancelSleepAlarm()
             }
+        }
+    }
+
+    fun setAlarmRingtone(option: RingtoneOption) {
+        viewModelScope.launch {
+            settingsRepository.setAlarmRingtone(option)
         }
     }
 
