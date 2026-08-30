@@ -19,8 +19,6 @@ class BootReceiver : BroadcastReceiver() {
     @Inject lateinit var alarmScheduler: AlarmScheduler
 
     override fun onReceive(context: Context, intent: Intent) {
-        super.onReceive(context, intent)
-
         if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
 
         val pendingResult = goAsync()
