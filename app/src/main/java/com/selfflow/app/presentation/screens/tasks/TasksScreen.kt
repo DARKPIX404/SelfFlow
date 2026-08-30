@@ -56,12 +56,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.selfflow.app.R
 import com.selfflow.app.domain.model.Priority
 import com.selfflow.app.domain.model.Routine
 import com.selfflow.app.domain.model.Status
 import com.selfflow.app.domain.model.Task
 import com.selfflow.app.presentation.components.EmptyState
+import com.selfflow.app.presentation.components.SwipeableItem
 import com.selfflow.app.presentation.viewmodel.TaskDialogState
 import com.selfflow.app.presentation.viewmodel.TasksViewModel
 import java.time.Instant
@@ -77,6 +80,7 @@ fun TasksScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val haptic = LocalHapticFeedback.current
 
     Scaffold(
@@ -89,47 +93,58 @@ fun TasksScreen(
             }
         }
     ) { innerPadding ->
-        Column(
+        SwipeRefresh(
+            state = rememberSwipeRefreshState(isRefreshing),
+            onRefresh = viewModel::refresh,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp)
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+            ) {
+                Spacer(modifier = Modifier.height(8.dp))
 
-            StatusFilterChips(
-                selectedStatus = uiState.selectedStatus,
-                counts = uiState.taskCounts,
-                onSelected = viewModel::selectStatusFilter
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            if (uiState.tasks.isEmpty()) {
-                EmptyState(
-                    icon = Icons.Default.List,
-                    title = stringResource(R.string.tasks_empty_title),
-                    description = stringResource(R.string.tasks_empty_description),
-                    modifier = Modifier.weight(1f)
+                StatusFilterChips(
+                    selectedStatus = uiState.selectedStatus,
+                    counts = uiState.taskCounts,
+                    onSelected = viewModel::selectStatusFilter
                 )
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(bottom = 88.dp)
-                ) {
-                    items(uiState.tasks, key = { it.id }) { task ->
-                        TaskListItem(
-                            task = task,
-                            routine = uiState.routines.find { it.id == task.routineId },
-                            onClick = { viewModel.openEditDialog(task) },
-                            onToggleStatus = {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                viewModel.toggleStatus(task)
-                            },
-                            onDelete = { viewModel.deleteTask(task) },
-                            modifier = Modifier.animateItemPlacement()
-                        )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (uiState.tasks.isEmpty()) {
+                    EmptyState(
+                        icon = Icons.Default.List,
+                        title = stringResource(R.string.tasks_empty_title),
+                        description = stringResource(R.string.tasks_empty_description),
+                        modifier = Modifier.weight(1f)
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(bottom = 88.dp)
+                    ) {
+                        items(uiState.tasks, key = { it.id }) { task ->
+                            SwipeableItem(
+                                onDismiss = { viewModel.deleteTask(task) },
+                                modifier = Modifier.animateItemPlacement()
+                            ) {
+                                TaskListItem(
+                                    task = task,
+                                    routine = uiState.routines.find { it.id == task.routineId },
+                                    onClick = { viewModel.openEditDialog(task) },
+                                    onToggleStatus = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        viewModel.toggleStatus(task)
+                                    },
+                                    onDelete = { viewModel.deleteTask(task) }
+                                )
+                            }
+                        }
                     }
                 }
             }

@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -46,6 +47,9 @@ class RoutineViewModel @Inject constructor(
 
     private val _templateDialogOpen = MutableStateFlow(false)
     val templateDialogOpen: StateFlow<Boolean> = _templateDialogOpen.asStateFlow()
+
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
     fun showAddDialog() {
         _dialogState.value = RoutineDialogState.Visible(
@@ -123,6 +127,15 @@ class RoutineViewModel @Inject constructor(
             alarmScheduler.scheduleRoutineAlarm(routine)
         } else {
             alarmScheduler.cancelRoutineAlarm(routine.id)
+        }
+    }
+
+    fun refresh() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            val activeRoutines = routines.first()
+            activeRoutines.filter { it.isActive }.forEach { alarmScheduler.scheduleRoutineAlarm(it) }
+            _isRefreshing.value = false
         }
     }
 

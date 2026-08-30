@@ -11,9 +11,11 @@ import com.selfflow.app.domain.model.Task
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
 import javax.inject.Inject
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -48,6 +50,9 @@ class TasksViewModel @Inject constructor(
             taskCounts = Status.entries.associateWith { status -> tasks.count { it.status == status } }
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), TasksUiState())
+
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
     private val _dialogState = MutableStateFlow<TaskDialogState>(TaskDialogState.Closed)
     val dialogState: StateFlow<TaskDialogState> = _dialogState
@@ -122,6 +127,14 @@ class TasksViewModel @Inject constructor(
         val completedAt = if (nextStatus == Status.DONE) Instant.now() else null
         viewModelScope.launch {
             taskRepository.update(task.copy(status = nextStatus, completedAt = completedAt))
+        }
+    }
+
+    fun refresh() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            delay(500)
+            _isRefreshing.value = false
         }
     }
 }

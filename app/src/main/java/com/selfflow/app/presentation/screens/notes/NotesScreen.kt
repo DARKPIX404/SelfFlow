@@ -48,9 +48,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.selfflow.app.R
 import com.selfflow.app.domain.model.Note
 import com.selfflow.app.presentation.components.EmptyState
+import com.selfflow.app.presentation.components.SwipeableItem
 import com.selfflow.app.presentation.viewmodel.NotesViewModel
 import java.time.Instant
 
@@ -59,6 +62,7 @@ import java.time.Instant
 fun NotesScreen(viewModel: NotesViewModel = hiltViewModel()) {
     val notes by viewModel.notes.collectAsStateWithLifecycle()
     val query by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
     var showDialog by rememberSaveable { mutableStateOf(false) }
     var editingNote by remember { mutableStateOf<Note?>(null) }
@@ -83,63 +87,74 @@ fun NotesScreen(viewModel: NotesViewModel = hiltViewModel()) {
             }
         }
     ) { innerPadding ->
-        Column(
+        SwipeRefresh(
+            state = rememberSwipeRefreshState(isRefreshing),
+            onRefresh = viewModel::refresh,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp)
         ) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+            ) {
+                Spacer(modifier = Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = query,
-                onValueChange = viewModel::onSearchQueryChange,
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text(stringResource(R.string.search_notes_hint)) },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = null
-                    )
-                },
-                singleLine = true
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            if (notes.isEmpty()) {
-                EmptyState(
-                    icon = Icons.Default.Edit,
-                    title = if (query.isBlank()) {
-                        stringResource(R.string.notes_empty_title)
-                    } else {
-                        stringResource(R.string.notes_search_empty_title)
-                    },
-                    description = if (query.isBlank()) {
-                        stringResource(R.string.notes_empty)
-                    } else {
-                        stringResource(R.string.notes_search_empty)
-                    },
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(
-                        items = notes,
-                        key = { it.id }
-                    ) { note ->
-                        NoteCard(
-                            note = note,
-                            onClick = {
-                                editingNote = note
-                                showDialog = true
-                            },
-                            onDelete = { viewModel.deleteNote(note) },
-                            modifier = Modifier.animateItemPlacement()
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = viewModel::onSearchQueryChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text(stringResource(R.string.search_notes_hint)) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = null
                         )
+                    },
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (notes.isEmpty()) {
+                    EmptyState(
+                        icon = Icons.Default.Edit,
+                        title = if (query.isBlank()) {
+                            stringResource(R.string.notes_empty_title)
+                        } else {
+                            stringResource(R.string.notes_search_empty_title)
+                        },
+                        description = if (query.isBlank()) {
+                            stringResource(R.string.notes_empty)
+                        } else {
+                            stringResource(R.string.notes_search_empty)
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(
+                            items = notes,
+                            key = { it.id }
+                        ) { note ->
+                            SwipeableItem(
+                                onDismiss = { viewModel.deleteNote(note) },
+                                modifier = Modifier.animateItemPlacement()
+                            ) {
+                                NoteCard(
+                                    note = note,
+                                    onClick = {
+                                        editingNote = note
+                                        showDialog = true
+                                    },
+                                    onDelete = { viewModel.deleteNote(note) }
+                                )
+                            }
+                        }
                     }
                 }
             }
