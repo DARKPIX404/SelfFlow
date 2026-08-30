@@ -177,6 +177,11 @@
     <string name="settings_sleep_time_picker_title">Время сна</string>
     <string name="settings_change_button">Изменить</string>
 
+    <!-- Easter egg -->
+    <string name="easter_egg_title">Пасхалка!</string>
+    <string name="easter_egg_yandex_button">Открыть альбом на Яндекс Диске</string>
+    <string name="easter_egg_close">Закрыть</string>
+
     <!-- Statistics -->
     <string name="statistics_title">Статистика</string>
     <string name="stats_task_completion_title">Выполнение задач</string>
