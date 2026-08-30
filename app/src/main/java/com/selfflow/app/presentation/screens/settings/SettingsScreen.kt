@@ -306,14 +306,21 @@ fun SettingsScreen(
             },
             title = { Text(stringResource(R.string.easter_egg_title)) },
             text = {
-                Image(
-                    painter = painterResource(R.drawable.easter_egg_photo),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(4f / 3f),
-                    contentScale = ContentScale.Crop
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Image(
+                        painter = painterResource(R.drawable.easter_egg_photo),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(4f / 3f),
+                        contentScale = ContentScale.Crop
+                    )
+                    Text(
+                        text = stringResource(R.string.easter_egg_password_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         )
     }

@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -35,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.selfflow.app.R
 import com.selfflow.app.domain.model.RecurrenceRule
 import com.selfflow.app.domain.model.Routine
+import com.selfflow.app.presentation.components.EmptyState
 import com.selfflow.app.presentation.components.toDisplayName
 import com.selfflow.app.presentation.components.RoutineFormDialog
 import com.selfflow.app.presentation.components.TemplateDialog
@@ -83,7 +85,12 @@ fun RoutineScreen(
                 .padding(innerPadding)
         ) {
             if (routines.isEmpty()) {
-                EmptyState(modifier = Modifier.align(Alignment.Center))
+                EmptyState(
+                    icon = Icons.Default.Schedule,
+                    title = stringResource(R.string.routine_empty_title),
+                    description = stringResource(R.string.routine_empty_state),
+                    modifier = Modifier.align(Alignment.Center)
+                )
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -97,7 +104,8 @@ fun RoutineScreen(
                         RoutineListItem(
                             routine = routine,
                             onClick = { viewModel.showEditDialog(routine) },
-                            onDelete = { viewModel.deleteRoutine(routine) }
+                            onDelete = { viewModel.deleteRoutine(routine) },
+                            modifier = Modifier.animateItemPlacement()
                         )
                     }
                 }
@@ -137,27 +145,19 @@ fun RoutineScreen(
     }
 }
 
-@Composable
-private fun EmptyState(modifier: Modifier = Modifier) {
-    Text(
-        text = stringResource(R.string.routine_empty_state),
-        style = MaterialTheme.typography.bodyLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = modifier.padding(horizontal = 32.dp)
-    )
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RoutineListItem(
     routine: Routine,
     onClick: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     RoutineCard(
         routine = routine,
         onClick = onClick,
-        onDelete = onDelete
+        onDelete = onDelete,
+        modifier = modifier
     )
 }
 
@@ -166,7 +166,8 @@ private fun RoutineListItem(
 private fun RoutineCard(
     routine: Routine,
     onClick: () -> Unit,
-    onDelete: () -> Unit = {}
+    onDelete: () -> Unit = {},
+    modifier: Modifier = Modifier
 ) {
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
     val start = LocalDateTime.ofInstant(routine.startTime, ZoneId.systemDefault())
@@ -177,7 +178,7 @@ private fun RoutineCard(
 
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier
