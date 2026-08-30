@@ -26,14 +26,12 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: 8.7
 
       - name: Build debug APK
         shell: bash
         run: |
           set -o pipefail
-          gradle assembleDebug --stacktrace --no-daemon 2>&1 | tee build.log
+          ./gradlew :app:assembleDebug --stacktrace --no-daemon 2>&1 | tee build.log
 
       - name: Upload build logs on failure
         if: failure()

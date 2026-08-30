@@ -6,15 +6,19 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import com.selfflow.app.R
+import com.selfflow.app.data.repository.SettingsRepository
+import com.selfflow.app.presentation.screens.alarm.AlarmOverlayActivity
 import com.selfflow.app.service.notification.NotificationHelper
-import com.selfflow.app.service.overlay.OverlayService
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
 class AlarmService : Service() {
 
     @Inject lateinit var notificationHelper: NotificationHelper
+    @Inject lateinit var settingsRepository: SettingsRepository
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val title = intent?.getStringExtra(EXTRA_TITLE) ?: getString(R.string.app_name)
@@ -32,11 +36,18 @@ class AlarmService : Service() {
             startForeground(NotificationHelper.NOTIFICATION_ID_ALARM, notification)
         }
 
-        val overlayIntent = Intent(this, OverlayService::class.java).apply {
-            putExtra(OverlayService.EXTRA_TITLE, title)
-            putExtra(OverlayService.EXTRA_CONTENT, content)
+        val ringtone = runBlocking(Dispatchers.IO) {
+            settingsRepository.alarmRingtone.first()
         }
-        startService(overlayIntent)
+
+        startActivity(
+            AlarmOverlayActivity.createIntent(
+                context = this,
+                title = title,
+                content = content,
+                ringtone = ringtone
+            )
+        )
 
         return START_STICKY
     }

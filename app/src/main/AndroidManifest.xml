@@ -46,14 +46,21 @@
             </intent-filter>
         </receiver>
 
+        <activity
+            android:name=".presentation.screens.alarm.AlarmOverlayActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:showOnLockScreen="true"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:theme="@style/Theme.SelfFlow" />
+
         <service
             android:name=".service.alarm.AlarmService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
-
-        <service
-            android:name=".service.overlay.OverlayService"
-            android:exported="false" />
 
     </application>
 </manifest>

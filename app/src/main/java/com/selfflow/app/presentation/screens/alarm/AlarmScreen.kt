@@ -15,7 +15,10 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -24,11 +27,14 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -37,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.selfflow.app.R
+import com.selfflow.app.data.alarm.RingtoneOption
 import com.selfflow.app.presentation.util.PermissionHelper
 import com.selfflow.app.presentation.viewmodel.AlarmViewModel
 import java.time.format.DateTimeFormatter
@@ -53,6 +60,7 @@ fun AlarmScreen(viewModel: AlarmViewModel = hiltViewModel()) {
     val wakeTime by viewModel.wakeTime.collectAsStateWithLifecycle()
     val sleepTime by viewModel.sleepTime.collectAsStateWithLifecycle()
     val alarmEnabled by viewModel.alarmEnabled.collectAsStateWithLifecycle()
+    val alarmRingtone by viewModel.alarmRingtone.collectAsStateWithLifecycle()
 
     val timeFormatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
 
@@ -126,6 +134,29 @@ fun AlarmScreen(viewModel: AlarmViewModel = hiltViewModel()) {
                 }
             }
 
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.alarm_ringtone_label),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    RingtoneDropdown(
+                        selected = alarmRingtone,
+                        onSelected = { viewModel.setAlarmRingtone(it) }
+                    )
+                }
+            }
+
             if (!PermissionHelper.canDrawOverlays(context)) {
                 OutlinedButton(
                     onClick = {
@@ -189,6 +220,46 @@ fun AlarmScreen(viewModel: AlarmViewModel = hiltViewModel()) {
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RingtoneDropdown(
+    selected: RingtoneOption,
+    onSelected: (RingtoneOption) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        TextField(
+            value = stringResource(selected.titleRes),
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(stringResource(R.string.alarm_ringtone_hint)) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor()
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            RingtoneOption.entries.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(option.titleRes)) },
+                    onClick = {
+                        onSelected(option)
+                        expanded = false
+                    }
+                )
+            }
         }
     }
 }

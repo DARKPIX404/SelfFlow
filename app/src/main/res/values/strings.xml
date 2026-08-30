@@ -151,6 +151,13 @@
     <string name="alarm_sleep_label">Сон</string>
     <string name="alarm_enabled">Будильник включён</string>
     <string name="alarm_disabled">Будильник выключен</string>
+    <string name="alarm_ringtone_label">Мелодия будильника</string>
+    <string name="alarm_ringtone_hint">Выберите мелодию</string>
+    <string name="alarm_snooze_button">Отложить на 5 минут</string>
+    <string name="ringtone_system_default">Системная по умолчанию</string>
+    <string name="ringtone_morning_light">Morning Light</string>
+    <string name="ringtone_digital_beep">Digital Beep</string>
+    <string name="ringtone_classic_bell">Classic Bell</string>
     <string name="overlay_permission_button">Разрешение поверх других приложений</string>
     <string name="notification_permission_button">Разрешить уведомления</string>
     <string name="alarm_test_button">Проверить будильник и оверлей</string>
