@@ -31,13 +31,17 @@ API 26 (Android 8.0)
 - **Экспорт/импорт**: резервное копирование данных в JSON через Storage Access Framework.
 - **Темы**: светлая/тёмная тема и Material You (динамические цвета).
 
+## Дизайн и UX
+
+См. [docs/DESIGN_AND_UI_GUIDE.md](docs/DESIGN_AND_UI_GUIDE.md) — принципы Material Design 3, motion, accessibility и рекомендуемые библиотеки для улучшения интерфейса.
+
 ## Сборка
 
 Проект открывается в Android Studio. Gradle wrapper отсутствует — студия предложит сгенерировать его при первом открытии (`gradle/wrapper/gradle-wrapper.jar` и `gradlew`).
 
 ### Готовый APK
 
-Каждый пуш в `master` собирает debug APK через GitHub Actions. Скачать можно на странице **Actions → Build Debug APK → последний успешный запуск → артефакт `app-debug`**. APK подписан debug-ключом и устанавливается на телефон как обычное приложение.
+Каждый пуш в `master` собирает debug APK через GitHub Actions и выкладывает в [GitHub Releases](https://github.com/DARKPIX404/SelfFlow/releases). APK подписан debug-ключом и устанавливается на телефон как обычное приложение.
 
 ### Релизная сборка
 
