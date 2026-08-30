@@ -34,3 +34,14 @@ API 26 (Android 8.0)
 ## Сборка
 
 Проект открывается в Android Studio. Gradle wrapper отсутствует — студия предложит сгенерировать его при первом открытии (`gradle/wrapper/gradle-wrapper.jar` и `gradlew`).
+
+### Готовый APK
+
+Каждый пуш в `master` собирает debug APK через GitHub Actions. Скачать можно на странице **Actions → Build Debug APK → последний успешный запуск → артефакт `app-debug`**. APK подписан debug-ключом и устанавливается на телефон как обычное приложение.
+
+### Релизная сборка
+
+Для выпуска релиза нужно настроить подпись в `app/build.gradle.kts`:
+1. Создать keystore: `keytool -genkey -v -keystore release.keystore -alias selfflow -keyalg RSA -keysize 2048 -validity 10000`.
+2. Добавить `signingConfigs.release` и указать его в `buildTypes.release`.
+3. Собрать: `./gradlew assembleRelease`.
