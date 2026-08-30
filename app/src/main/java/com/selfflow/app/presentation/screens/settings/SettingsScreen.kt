@@ -2,10 +2,13 @@ package com.selfflow.app.presentation.screens.settings
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -35,6 +38,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -64,6 +70,10 @@ fun SettingsScreen(
     var showWakePicker by remember { mutableStateOf(false) }
     var showSleepPicker by remember { mutableStateOf(false) }
 
+    var titleClickCount by remember { mutableStateOf(0) }
+    var showEasterEgg by remember { mutableStateOf(false) }
+    val uriHandler = LocalUriHandler.current
+
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
@@ -87,7 +97,18 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.settings_title)) }
+                title = {
+                    Text(
+                        text = stringResource(R.string.settings_title),
+                        modifier = Modifier.clickable {
+                            titleClickCount++
+                            if (titleClickCount >= 5) {
+                                titleClickCount = 0
+                                showEasterEgg = true
+                            }
+                        }
+                    )
+                }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -263,6 +284,37 @@ fun SettingsScreen(
             },
             title = { Text(stringResource(R.string.settings_sleep_time_picker_title)) },
             text = { TimePicker(state = state) }
+        )
+    }
+
+    if (showEasterEgg) {
+        AlertDialog(
+            onDismissRequest = { showEasterEgg = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        uriHandler.openUri("https://disk.yandex.ru/d/cuN7AhA5rKcm8w")
+                    }
+                ) {
+                    Text(stringResource(R.string.easter_egg_yandex_button))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEasterEgg = false }) {
+                    Text(stringResource(R.string.easter_egg_close))
+                }
+            },
+            title = { Text(stringResource(R.string.easter_egg_title)) },
+            text = {
+                Image(
+                    painter = painterResource(R.drawable.easter_egg_photo),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(4f / 3f),
+                    contentScale = ContentScale.Crop
+                )
+            }
         )
     }
 }
