@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -21,6 +22,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -42,6 +44,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -65,10 +69,16 @@ fun SettingsScreen(
     val wakeTime by viewModel.wakeTime.collectAsStateWithLifecycle()
     val sleepTime by viewModel.sleepTime.collectAsStateWithLifecycle()
     val dynamicThemeEnabled by viewModel.dynamicThemeEnabled.collectAsStateWithLifecycle()
+    val appLockEnabled by viewModel.appLockEnabled.collectAsStateWithLifecycle()
+    val biometricEnabled by viewModel.biometricEnabled.collectAsStateWithLifecycle()
+    val isPinSet by viewModel.isPinSet.collectAsStateWithLifecycle()
+    val biometricAvailable = viewModel.biometricAvailable
 
     val timeFormatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
     var showWakePicker by remember { mutableStateOf(false) }
     var showSleepPicker by remember { mutableStateOf(false) }
+    var showPinDialog by remember { mutableStateOf(false) }
+    var showDisableLockDialog by remember { mutableStateOf(false) }
 
     var titleClickCount by remember { mutableStateOf(0) }
     var showEasterEgg by remember { mutableStateOf(false) }
@@ -216,6 +226,74 @@ fun SettingsScreen(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.settings_security_section),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = stringResource(R.string.settings_app_lock_toggle),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Switch(
+                            checked = appLockEnabled,
+                            onCheckedChange = { enabled ->
+                                if (enabled) {
+                                    if (isPinSet) {
+                                        viewModel.setAppLockEnabled(true)
+                                    } else {
+                                        showPinDialog = true
+                                    }
+                                } else {
+                                    showDisableLockDialog = true
+                                }
+                            }
+                        )
+                    }
+
+                    if (appLockEnabled && biometricAvailable) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = stringResource(R.string.settings_biometric_toggle),
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            Switch(
+                                checked = biometricEnabled,
+                                onCheckedChange = { viewModel.setBiometricEnabled(it) }
+                            )
+                        }
+                    }
+
+                    if (appLockEnabled) {
+                        OutlinedButton(
+                            onClick = { showPinDialog = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(stringResource(R.string.settings_change_pin_button))
+                        }
+                    }
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
                         text = stringResource(R.string.settings_language_section),
@@ -287,6 +365,39 @@ fun SettingsScreen(
         )
     }
 
+    if (showPinDialog) {
+        PinCreationDialog(
+            onDismiss = { showPinDialog = false },
+            onPinSet = { pin ->
+                viewModel.setPin(pin)
+                showPinDialog = false
+            }
+        )
+    }
+
+    if (showDisableLockDialog) {
+        AlertDialog(
+            onDismissRequest = { showDisableLockDialog = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.setAppLockEnabled(false)
+                        showDisableLockDialog = false
+                    }
+                ) {
+                    Text(stringResource(R.string.disable))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDisableLockDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+            title = { Text(stringResource(R.string.settings_disable_lock_title)) },
+            text = { Text(stringResource(R.string.settings_disable_lock_message)) }
+        )
+    }
+
     if (showEasterEgg) {
         AlertDialog(
             onDismissRequest = { showEasterEgg = false },
@@ -350,3 +461,82 @@ private fun TimeSettingRow(
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PinCreationDialog(
+    onDismiss: () -> Unit,
+    onPinSet: (String) -> Unit
+) {
+    var pin by remember { mutableStateOf("") }
+    var confirmPin by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    when {
+                        pin.length != PIN_LENGTH || pin.any { !it.isDigit() } -> {
+                            error = stringResource(R.string.pin_invalid_length)
+                        }
+                        pin != confirmPin -> {
+                            error = stringResource(R.string.pin_mismatch)
+                        }
+                        else -> {
+                            onPinSet(pin)
+                        }
+                    }
+                }
+            ) {
+                Text(stringResource(R.string.save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        },
+        title = { Text(stringResource(R.string.pin_dialog_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = pin,
+                    onValueChange = { value ->
+                        if (value.length <= PIN_LENGTH && value.all { it.isDigit() }) {
+                            pin = value
+                            error = null
+                        }
+                    },
+                    label = { Text(stringResource(R.string.pin_new_label)) },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword)
+                )
+                OutlinedTextField(
+                    value = confirmPin,
+                    onValueChange = { value ->
+                        if (value.length <= PIN_LENGTH && value.all { it.isDigit() }) {
+                            confirmPin = value
+                            error = null
+                        }
+                    },
+                    label = { Text(stringResource(R.string.pin_confirm_label)) },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword)
+                )
+                error?.let {
+                    Text(
+                        text = it,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        }
+    )
+}
+
+private const val PIN_LENGTH = 4

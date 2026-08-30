@@ -190,6 +190,8 @@
 
     <!-- Statistics -->
     <string name="statistics_title">Статистика</string>
+    <string name="stats_status_chart_title">Задачи по статусам</string>
+    <string name="stats_priority_chart_title">Задачи по приоритетам</string>
     <string name="stats_task_completion_title">Выполнение задач</string>
     <string name="stats_completed_out_of">Выполнено %1$d из %2$d</string>
     <string name="stats_status_distribution_title">Задачи по статусу</string>
@@ -198,4 +200,27 @@
     <string name="stats_routines_today">Запланировано сегодня</string>
     <string name="stats_routines_completed">Завершено</string>
     <string name="stats_notes_title">Заметки</string>
+
+    <!-- App lock / Security -->
+    <string name="settings_security_section">Безопасность</string>
+    <string name="settings_app_lock_toggle">Защита приложения PIN-кодом</string>
+    <string name="settings_biometric_toggle">Вход по отпечатку / Face ID</string>
+    <string name="settings_change_pin_button">Изменить PIN-код</string>
+    <string name="settings_disable_lock_title">Отключить защиту?</string>
+    <string name="settings_disable_lock_message">PIN-код будет удалён. Продолжить?</string>
+    <string name="disable">Отключить</string>
+
+    <string name="lock_title">Введите PIN-код</string>
+    <string name="lock_pin_error">Неверный PIN-код</string>
+    <string name="lock_backspace_description">Стереть</string>
+
+    <string name="biometric_icon_description">Вход по биометрии</string>
+    <string name="biometric_prompt_title">Вход в SelfFlow</string>
+    <string name="biometric_prompt_subtitle">Используйте отпечаток или Face ID</string>
+
+    <string name="pin_dialog_title">Создание PIN-кода</string>
+    <string name="pin_new_label">Новый PIN-код</string>
+    <string name="pin_confirm_label">Повторите PIN-код</string>
+    <string name="pin_invalid_length">PIN-код должен содержать 4 цифры</string>
+    <string name="pin_mismatch">PIN-коды не совпадают</string>
 </resources>

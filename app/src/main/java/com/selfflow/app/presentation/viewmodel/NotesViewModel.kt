@@ -6,6 +6,7 @@ import com.selfflow.app.data.repository.NoteRepository
 import com.selfflow.app.domain.model.Note
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -41,6 +42,9 @@ class NotesViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     fun onSearchQueryChange(query: String) {
         _searchQuery.value = query
     }
@@ -58,6 +62,14 @@ class NotesViewModel @Inject constructor(
     fun deleteNote(note: Note) {
         viewModelScope.launch {
             noteRepository.delete(note)
+        }
+    }
+
+    fun refresh() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            delay(500)
+            _isRefreshing.value = false
         }
     }
 }

@@ -35,6 +35,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.selfflow.app.R
 import com.selfflow.app.domain.model.RecurrenceRule
 import com.selfflow.app.domain.model.Routine
@@ -57,6 +59,7 @@ fun RoutineScreen(
     val templates by viewModel.templates.collectAsStateWithLifecycle()
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
     val templateDialogOpen by viewModel.templateDialogOpen.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -81,34 +84,38 @@ fun RoutineScreen(
             }
         }
     ) { innerPadding ->
-        Box(
+        SwipeRefresh(
+            state = rememberSwipeRefreshState(isRefreshing),
+            onRefresh = viewModel::refresh,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            if (routines.isEmpty()) {
-                EmptyState(
-                    icon = Icons.Default.Schedule,
-                    title = stringResource(R.string.routine_empty_title),
-                    description = stringResource(R.string.routine_empty_state),
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(
-                        items = routines,
-                        key = { it.id }
-                    ) { routine ->
-                        RoutineListItem(
-                            routine = routine,
-                            onClick = { viewModel.showEditDialog(routine) },
-                            onDelete = { viewModel.deleteRoutine(routine) },
-                            modifier = Modifier.animateItemPlacement()
-                        )
+            Box(modifier = Modifier.fillMaxSize()) {
+                if (routines.isEmpty()) {
+                    EmptyState(
+                        icon = Icons.Default.Schedule,
+                        title = stringResource(R.string.routine_empty_title),
+                        description = stringResource(R.string.routine_empty_state),
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(
+                            items = routines,
+                            key = { it.id }
+                        ) { routine ->
+                            RoutineListItem(
+                                routine = routine,
+                                onClick = { viewModel.showEditDialog(routine) },
+                                onDelete = { viewModel.deleteRoutine(routine) },
+                                modifier = Modifier.animateItemPlacement()
+                            )
+                        }
                     }
                 }
             }

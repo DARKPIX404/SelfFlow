@@ -36,6 +36,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.selfflow.app.R
 import com.selfflow.app.domain.model.Priority
 import com.selfflow.app.domain.model.Status
+import com.selfflow.app.presentation.components.charts.TaskPriorityBarChart
+import com.selfflow.app.presentation.components.charts.TaskStatusPieChart
 import com.selfflow.app.presentation.viewmodel.StatisticsUiState
 import com.selfflow.app.presentation.viewmodel.StatisticsViewModel
 
@@ -66,6 +68,8 @@ fun StatisticsScreen(
             )
             StatusDistributionCard(counts = uiState.statusCounts)
             PriorityDistributionCard(counts = uiState.priorityCounts)
+            StatusChartCard(counts = uiState.statusCounts)
+            PriorityChartCard(counts = uiState.priorityCounts)
             RoutineStatsCard(
                 todayCount = uiState.routinesToday,
                 completedCount = uiState.routinesCompleted
@@ -133,6 +137,42 @@ private fun RoutineStatsCard(todayCount: Int, completedCount: Int) {
                 value = completedCount.toString()
             )
         }
+    }
+}
+
+@Composable
+private fun StatusChartCard(counts: Map<Status, Int>) {
+    val labels = mapOf(
+        Status.TODO to stringResource(R.string.status_todo),
+        Status.IN_PROGRESS to stringResource(R.string.status_in_progress),
+        Status.DONE to stringResource(R.string.status_done)
+    )
+    StatCard(title = stringResource(R.string.stats_status_chart_title)) {
+        TaskStatusPieChart(
+            counts = counts,
+            labels = labels,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(240.dp)
+        )
+    }
+}
+
+@Composable
+private fun PriorityChartCard(counts: Map<Priority, Int>) {
+    val labels = mapOf(
+        Priority.LOW to stringResource(R.string.priority_low),
+        Priority.MEDIUM to stringResource(R.string.priority_medium),
+        Priority.HIGH to stringResource(R.string.priority_high)
+    )
+    StatCard(title = stringResource(R.string.stats_priority_chart_title)) {
+        TaskPriorityBarChart(
+            counts = counts,
+            labels = labels,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(240.dp)
+        )
     }
 }
 
