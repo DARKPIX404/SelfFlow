@@ -80,6 +80,7 @@ fun SelfFlowTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
+        shapes = SelfFlowShapes,
         content = content
     )
 }
