@@ -1,4 +1,7 @@
-@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@file:OptIn(
+    androidx.compose.foundation.ExperimentalFoundationApi::class,
+    androidx.compose.material.ExperimentalMaterialApi::class
+)
 
 package com.selfflow.app.presentation.screens.routine
 
@@ -18,10 +21,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -30,7 +34,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.ui.unit.Dp
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -39,9 +45,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.selfflow.app.R
 import com.selfflow.app.domain.model.RecurrenceRule
 import com.selfflow.app.domain.model.Routine
@@ -66,6 +69,8 @@ fun RoutineScreen(
     val templateDialogOpen by viewModel.templateDialogOpen.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
+    val pullRefreshState = rememberPullRefreshState(isRefreshing, viewModel::refresh)
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -73,7 +78,7 @@ fun RoutineScreen(
                 actions = {
                     IconButton(onClick = viewModel::showTemplateDialog) {
                         Icon(
-                            imageVector = Icons.Default.List,
+                            imageVector = Icons.AutoMirrored.Filled.List,
                             contentDescription = stringResource(R.string.templates_title)
                         )
                     }
@@ -89,55 +94,52 @@ fun RoutineScreen(
             }
         }
     ) { innerPadding ->
-        SwipeRefresh(
-            state = rememberSwipeRefreshState(isRefreshing),
-            onRefresh = viewModel::refresh,
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
-            indicator = { state, trigger ->
-                SwipeRefreshIndicator(
-                    state = state,
-                    refreshTriggerDistance = trigger,
-                    contentColor = MaterialTheme.colorScheme.primary
-                )
-            }
+                .padding(innerPadding)
+                .pullRefresh(pullRefreshState)
         ) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                if (routines.isEmpty()) {
-                    EmptyState(
-                        icon = Icons.Default.Schedule,
-                        title = stringResource(R.string.routine_empty_title),
-                        description = stringResource(R.string.routine_empty_state),
-                        modifier = Modifier.align(Alignment.Center),
-                        actionButton = {
-                            Button(onClick = viewModel::showAddDialog) {
-                                Icon(Icons.Default.Add, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.add_routine_content_description))
-                            }
+            if (routines.isEmpty()) {
+                EmptyState(
+                    icon = Icons.Default.Schedule,
+                    title = stringResource(R.string.routine_empty_title),
+                    description = stringResource(R.string.routine_empty_state),
+                    modifier = Modifier.align(Alignment.Center),
+                    actionButton = {
+                        Button(onClick = viewModel::showAddDialog) {
+                            Icon(Icons.Default.Add, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stringResource(R.string.add_routine_content_description))
                         }
-                    )
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(
-                            items = routines,
-                            key = { it.id }
-                        ) { routine ->
-                            RoutineListItem(
-                                routine = routine,
-                                onClick = { viewModel.showEditDialog(routine) },
-                                onDelete = { viewModel.deleteRoutine(routine) },
-                                modifier = Modifier.animateItemPlacement()
-                            )
-                        }
+                    }
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(
+                        items = routines,
+                        key = { it.id }
+                    ) { routine ->
+                        RoutineListItem(
+                            routine = routine,
+                            onClick = { viewModel.showEditDialog(routine) },
+                            onDelete = { viewModel.deleteRoutine(routine) },
+                            modifier = Modifier.animateItemPlacement()
+                        )
                     }
                 }
             }
+
+            PullRefreshIndicator(
+                refreshing = isRefreshing,
+                state = pullRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter),
+                contentColor = MaterialTheme.colorScheme.primary
+            )
         }
     }
 
@@ -206,17 +208,21 @@ private fun RoutineCard(
 
     Card(
         onClick = onClick,
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(20.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 RowInfo(
                     title = routine.title,
@@ -230,14 +236,14 @@ private fun RoutineCard(
                 if (routine.description.isNotBlank()) {
                     Text(
                         text = routine.description,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
                 Text(
                     text = if (end != null) "$start — $end" else start,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.primary
                 )
 
@@ -247,7 +253,7 @@ private fun RoutineCard(
                             R.string.routine_recurrence_display,
                             routine.recurrenceRule.toDisplayName()
                         ),
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -276,11 +282,11 @@ private fun RowInfo(
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.titleLarge
         )
         Text(
             text = badge,
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.primary
         )
     }

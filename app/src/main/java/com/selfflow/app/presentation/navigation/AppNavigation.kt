@@ -1,9 +1,14 @@
 package com.selfflow.app.presentation.navigation
 
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.clickable
@@ -54,6 +59,7 @@ import com.selfflow.app.presentation.screens.alarm.AlarmScreen
 import com.selfflow.app.presentation.screens.calendar.CalendarScreen
 import com.selfflow.app.presentation.screens.home.HomeScreen
 import com.selfflow.app.presentation.screens.notes.NotesScreen
+import com.selfflow.app.presentation.screens.onboarding.OnboardingScreen
 import com.selfflow.app.presentation.screens.routine.RoutineScreen
 import com.selfflow.app.presentation.screens.settings.SettingsScreen
 import com.selfflow.app.presentation.screens.statistics.StatisticsScreen
@@ -65,17 +71,55 @@ private data class BottomNavItem(
     val icon: ImageVector
 )
 
-private fun AnimatedContentTransitionScope<NavBackStackEntry>.slideIn() =
-    fadeIn() + slideInHorizontally { it / 5 }
+private const val TRANSITION_DURATION = 350
 
-private fun AnimatedContentTransitionScope<NavBackStackEntry>.slideOut() =
-    fadeOut() + slideOutHorizontally { -it / 5 }
+private val bottomNavRoutes by lazy { bottomNavItems.map { it.route }.toSet() }
 
-private fun AnimatedContentTransitionScope<NavBackStackEntry>.popSlideIn() =
-    fadeIn() + slideInHorizontally { -it / 5 }
+private val AnimatedContentTransitionScope<NavBackStackEntry>.isBottomNavTransition: Boolean
+    get() = initialState.destination.route in bottomNavRoutes &&
+        targetState.destination.route in bottomNavRoutes
 
-private fun AnimatedContentTransitionScope<NavBackStackEntry>.popSlideOut() =
-    fadeOut() + slideOutHorizontally { it / 5 }
+private fun crossfadeIn() = fadeIn(tween(TRANSITION_DURATION)) +
+    scaleIn(initialScale = 0.96f, animationSpec = tween(TRANSITION_DURATION))
+
+private fun crossfadeOut() = fadeOut(tween(TRANSITION_DURATION)) +
+    scaleOut(targetScale = 0.96f, animationSpec = tween(TRANSITION_DURATION))
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.slideIn(): EnterTransition =
+    if (isBottomNavTransition) {
+        crossfadeIn()
+    } else {
+        fadeIn(tween(TRANSITION_DURATION)) +
+            scaleIn(initialScale = 0.95f, animationSpec = tween(TRANSITION_DURATION)) +
+            slideInHorizontally { it / 5 }
+    }
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.slideOut(): ExitTransition =
+    if (isBottomNavTransition) {
+        crossfadeOut()
+    } else {
+        fadeOut(tween(TRANSITION_DURATION)) +
+            scaleOut(targetScale = 0.95f, animationSpec = tween(TRANSITION_DURATION)) +
+            slideOutHorizontally { -it / 5 }
+    }
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.popSlideIn(): EnterTransition =
+    if (isBottomNavTransition) {
+        crossfadeIn()
+    } else {
+        fadeIn(tween(TRANSITION_DURATION)) +
+            scaleIn(initialScale = 0.95f, animationSpec = tween(TRANSITION_DURATION)) +
+            slideInHorizontally { -it / 5 }
+    }
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.popSlideOut(): ExitTransition =
+    if (isBottomNavTransition) {
+        crossfadeOut()
+    } else {
+        fadeOut(tween(TRANSITION_DURATION)) +
+            scaleOut(targetScale = 0.95f, animationSpec = tween(TRANSITION_DURATION)) +
+            slideOutHorizontally { it / 5 }
+    }
 
 private val bottomNavItems = listOf(
     BottomNavItem(Screen.Home.route, R.string.nav_home, Icons.Default.Home),
@@ -86,7 +130,10 @@ private val bottomNavItems = listOf(
 )
 
 @Composable
-fun AppNavigation(navController: NavHostController = rememberNavController()) {
+fun AppNavigation(
+    navController: NavHostController = rememberNavController(),
+    startDestination: String = Screen.Home.route
+) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val showBottomBar = bottomNavItems.any { it.route == currentDestination?.route }
@@ -112,9 +159,29 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
+            startDestination = startDestination,
             modifier = Modifier.padding(innerPadding)
         ) {
+            composable(
+                route = Screen.Onboarding.route,
+                enterTransition = {
+                    fadeIn(tween(400)) +
+                        scaleIn(initialScale = 0.98f, animationSpec = tween(400))
+                },
+                exitTransition = {
+                    fadeOut(tween(300)) +
+                        scaleOut(targetScale = 0.98f, animationSpec = tween(300))
+                }
+            ) {
+                OnboardingScreen(
+                    onComplete = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Onboarding.route) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
             composable(
                 route = Screen.Home.route,
                 enterTransition = { slideIn() },

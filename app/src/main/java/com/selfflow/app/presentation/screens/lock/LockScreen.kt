@@ -14,11 +14,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Backspace
+import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -74,49 +78,68 @@ fun LockScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = stringResource(R.string.lock_title),
-                style = MaterialTheme.typography.headlineMedium
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            PinDots(pin = pin, pinError = pinError)
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            if (showBiometric) {
-                IconButton(onClick = onBiometricClick) {
-                    Icon(
-                        imageVector = Icons.Default.Fingerprint,
-                        contentDescription = stringResource(R.string.biometric_icon_description),
-                        modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.primary
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.extraLarge,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(4.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.lock_title),
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
 
-            Keypad(
-                onDigit = { digit ->
-                    if (pin.length < PIN_LENGTH) {
-                        pin += digit
+                    PinDots(pin = pin, pinError = pinError)
+
+                    if (showBiometric) {
+                        IconButton(
+                            onClick = onBiometricClick,
+                            modifier = Modifier.size(64.dp),
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Fingerprint,
+                                contentDescription = stringResource(R.string.biometric_icon_description),
+                                modifier = Modifier.size(36.dp)
+                            )
+                        }
                     }
-                },
-                onBackspace = {
-                    if (pin.isNotEmpty()) {
-                        pin = pin.dropLast(1)
+
+                    Keypad(
+                        onDigit = { digit ->
+                            if (pin.length < PIN_LENGTH) {
+                                pin += digit
+                            }
+                        },
+                        onBackspace = {
+                            if (pin.isNotEmpty()) {
+                                pin = pin.dropLast(1)
+                            }
+                        }
+                    )
+
+                    if (pinError) {
+                        Text(
+                            text = stringResource(R.string.lock_pin_error),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyLarge,
+                            textAlign = TextAlign.Center
+                        )
                     }
                 }
-            )
-
-            if (pinError) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = stringResource(R.string.lock_pin_error),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium
-                )
             }
         }
     }
@@ -125,7 +148,7 @@ fun LockScreen(
 @Composable
 private fun PinDots(pin: String, pinError: Boolean) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         repeat(PIN_LENGTH) { index ->
@@ -137,7 +160,7 @@ private fun PinDots(pin: String, pinError: Boolean) {
             }
             Box(
                 modifier = Modifier
-                    .size(20.dp)
+                    .size(24.dp)
                     .clip(CircleShape)
                     .background(color)
             )
@@ -151,7 +174,7 @@ private fun Keypad(
     onBackspace: () -> Unit
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         val digits = listOf(
@@ -163,11 +186,11 @@ private fun Keypad(
 
         digits.forEach { row ->
             Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 row.forEach { digit ->
                     when (digit) {
-                        null -> Spacer(modifier = Modifier.size(72.dp))
+                        null -> Spacer(modifier = Modifier.size(80.dp))
                         else -> KeypadButton(
                             text = digit,
                             onClick = { onDigit(digit) }
@@ -179,11 +202,16 @@ private fun Keypad(
 
         IconButton(
             onClick = onBackspace,
-            modifier = Modifier.size(72.dp)
+            modifier = Modifier.size(80.dp),
+            colors = IconButtonDefaults.iconButtonColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         ) {
             Icon(
-                imageVector = Icons.Default.Backspace,
-                contentDescription = stringResource(R.string.lock_backspace_description)
+                imageVector = Icons.AutoMirrored.Filled.Backspace,
+                contentDescription = stringResource(R.string.lock_backspace_description),
+                modifier = Modifier.size(32.dp)
             )
         }
     }
@@ -201,9 +229,13 @@ private fun KeypadButton(
             onClick()
         },
         modifier = Modifier
-            .size(72.dp)
+            .size(80.dp)
             .aspectRatio(1f),
-        shape = CircleShape
+        shape = CircleShape,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        )
     ) {
         Text(
             text = text,

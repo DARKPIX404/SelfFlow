@@ -42,6 +42,10 @@ class SettingsRepository @Inject constructor(
         NotificationSoundOption.fromKey(preferences[PreferencesKeys.NOTIFICATION_SOUND])
     }
 
+    val onboardingCompleted: Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.ONBOARDING_COMPLETED] ?: false
+    }
+
     suspend fun setWakeTime(time: LocalTime) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.WAKE_TIME] = time.toString()
@@ -75,6 +79,12 @@ class SettingsRepository @Inject constructor(
     suspend fun setNotificationSound(option: NotificationSoundOption) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.NOTIFICATION_SOUND] = option.key
+        }
+    }
+
+    suspend fun setOnboardingCompleted(completed: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.ONBOARDING_COMPLETED] = completed
         }
     }
 

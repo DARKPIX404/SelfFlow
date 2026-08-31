@@ -1,6 +1,7 @@
 package com.selfflow.app.presentation.navigation
 
 sealed class Screen(val route: String) {
+    data object Onboarding : Screen("onboarding")
     data object Home : Screen("home")
     data object Routine : Screen("routine")
     data object Tasks : Screen("tasks")
