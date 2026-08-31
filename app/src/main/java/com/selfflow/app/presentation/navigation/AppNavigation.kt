@@ -1,30 +1,47 @@
 package com.selfflow.app.presentation.navigation
 
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavBackStackEntry
@@ -63,8 +80,8 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.popSlideOut() =
 private val bottomNavItems = listOf(
     BottomNavItem(Screen.Home.route, R.string.nav_home, Icons.Default.Home),
     BottomNavItem(Screen.Routine.route, R.string.nav_routine, Icons.Default.Schedule),
-    BottomNavItem(Screen.Tasks.route, R.string.nav_tasks, Icons.Default.List),
-    BottomNavItem(Screen.Notes.route, R.string.nav_notes, Icons.Default.Notifications),
+    BottomNavItem(Screen.Tasks.route, R.string.nav_tasks, Icons.AutoMirrored.Filled.List),
+    BottomNavItem(Screen.Notes.route, R.string.nav_notes, Icons.Default.CalendarMonth),
     BottomNavItem(Screen.Calendar.route, R.string.nav_calendar, Icons.Default.DateRange)
 )
 
@@ -73,33 +90,23 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val showBottomBar = bottomNavItems.any { it.route == currentDestination?.route }
-    val haptic = LocalHapticFeedback.current
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar {
-                    bottomNavItems.forEach { item ->
-                        val selected = currentDestination?.route == item.route
-                        val label = stringResource(item.labelRes)
-                        NavigationBarItem(
-                            icon = { Icon(item.icon, contentDescription = label) },
-                            label = { Text(label) },
-                            selected = selected,
-                            onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                navController.navigate(item.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
+                TelegramBottomBar(
+                    currentRoute = currentDestination?.route,
+                    onNavigate = { route ->
+                        navController.navigate(route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
                             }
-                        )
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
-                }
+                )
             }
         }
     ) { innerPadding ->
@@ -170,6 +177,96 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 popEnterTransition = { popSlideIn() },
                 popExitTransition = { popSlideOut() }
             ) { StatisticsScreen() }
+        }
+    }
+}
+
+@Composable
+private fun TelegramBottomBar(
+    currentRoute: String?,
+    onNavigate: (String) -> Unit
+) {
+    val haptic = LocalHapticFeedback.current
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 0.dp,
+        shadowElevation = 4.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(72.dp)
+                .padding(horizontal = 4.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            bottomNavItems.forEach { item ->
+                val selected = currentRoute == item.route
+                val label = stringResource(item.labelRes)
+                val scale by animateFloatAsState(
+                    targetValue = if (selected) 1.08f else 1f,
+                    label = "nav_item_scale"
+                )
+
+                BottomNavItem(
+                    icon = item.icon,
+                    label = label,
+                    selected = selected,
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onNavigate(item.route)
+                    },
+                    modifier = Modifier.scale(scale)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RowScope.BottomNavItem(
+    icon: ImageVector,
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val contentColor = if (selected) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+    }
+
+    Box(
+        modifier = modifier
+            .weight(1f)
+            .fillMaxSize()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = rememberRipple(bounded = false, radius = 32.dp),
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                modifier = Modifier.size(28.dp),
+                tint = contentColor
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = contentColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
