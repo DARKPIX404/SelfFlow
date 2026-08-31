@@ -6,6 +6,7 @@ import com.selfflow.app.service.notification.NotificationHelper
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
 @HiltAndroidApp
