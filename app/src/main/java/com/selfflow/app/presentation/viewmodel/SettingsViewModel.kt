@@ -62,6 +62,11 @@ class SettingsViewModel @Inject constructor(
     val biometricAvailable: Boolean = secureStorage.isBiometricAvailable()
 
     val isPinSet: StateFlow<Boolean> = secureStorage.isPinSetFlow()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000L),
+            initialValue = false
+        )
 
     val notificationSound: StateFlow<NotificationSoundOption> = settingsRepository.notificationSound
         .stateIn(
