@@ -13,7 +13,7 @@ android {
         applicationId = "com.selfflow.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
+        versionCode = 18
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -31,6 +31,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -97,7 +98,8 @@ dependencies {
     implementation("androidx.glance:glance-appwidget:1.1.0")
     implementation("androidx.glance:glance-material3:1.1.0")
 
-    implementation("com.google.accompanist:accompanist-swiperefresh:0.34.0")
+    implementation("androidx.compose.material:material")
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 

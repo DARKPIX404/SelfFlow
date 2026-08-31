@@ -245,6 +245,23 @@
     <string name="biometric_prompt_title">Вход в SelfFlow</string>
     <string name="biometric_prompt_subtitle">Используйте отпечаток или Face ID</string>
 
+    <!-- Onboarding -->
+    <string name="onboarding_skip">Пропустить</string>
+    <string name="onboarding_back">Назад</string>
+    <string name="onboarding_next">Далее</string>
+    <string name="onboarding_start">Начать</string>
+    <string name="onboarding_welcome_title">Добро пожаловать в SelfFlow</string>
+    <string name="onboarding_welcome_subtitle">Ваш личный помощник для рутин, задач и заметок</string>
+    <string name="onboarding_features_title">Возможности</string>
+    <string name="onboarding_feature_routines_title">Распорядок дня</string>
+    <string name="onboarding_feature_routines_desc">Планируйте день и следите за привычками</string>
+    <string name="onboarding_feature_tasks_title">Задачи</string>
+    <string name="onboarding_feature_tasks_desc">Фиксируйте дела и отслеживайте прогресс</string>
+    <string name="onboarding_feature_notes_title">Заметки</string>
+    <string name="onboarding_feature_notes_desc">Быстро записывайте мысли и идеи</string>
+    <string name="onboarding_ready_title">Всё готово!</string>
+    <string name="onboarding_ready_subtitle">Начните управлять своим днём прямо сейчас</string>
+
     <string name="pin_dialog_title">Создание PIN-кода</string>
     <string name="pin_new_label">Новый PIN-код</string>
     <string name="pin_confirm_label">Повторите PIN-код</string>

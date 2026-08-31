@@ -11,4 +11,5 @@ object PreferencesKeys {
     val ROUTINE_TEMPLATES = stringPreferencesKey("routine_templates")
     val ALARM_RINGTONE = stringPreferencesKey("alarm_ringtone")
     val NOTIFICATION_SOUND = stringPreferencesKey("notification_sound")
+    val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
 }
