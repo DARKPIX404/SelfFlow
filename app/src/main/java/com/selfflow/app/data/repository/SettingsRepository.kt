@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import com.selfflow.app.data.alarm.RingtoneOption
+import com.selfflow.app.data.notification.NotificationSoundOption
 import com.selfflow.app.data.preferences.PreferencesKeys
 import java.time.LocalTime
 import javax.inject.Inject
@@ -37,6 +38,10 @@ class SettingsRepository @Inject constructor(
         RingtoneOption.fromKey(preferences[PreferencesKeys.ALARM_RINGTONE])
     }
 
+    val notificationSound: Flow<NotificationSoundOption> = dataStore.data.map { preferences ->
+        NotificationSoundOption.fromKey(preferences[PreferencesKeys.NOTIFICATION_SOUND])
+    }
+
     suspend fun setWakeTime(time: LocalTime) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.WAKE_TIME] = time.toString()
@@ -64,6 +69,12 @@ class SettingsRepository @Inject constructor(
     suspend fun setAlarmRingtone(option: RingtoneOption) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.ALARM_RINGTONE] = option.key
+        }
+    }
+
+    suspend fun setNotificationSound(option: NotificationSoundOption) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.NOTIFICATION_SOUND] = option.key
         }
     }
 

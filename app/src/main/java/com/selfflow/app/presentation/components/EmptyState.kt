@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -20,7 +21,8 @@ fun EmptyState(
     icon: ImageVector,
     title: String,
     description: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    actionButton: @Composable (() -> Unit)? = null
 ) {
     Column(
         modifier = modifier
@@ -42,12 +44,16 @@ fun EmptyState(
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
         )
-        androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(8.dp))
+        Spacer(modifier = Modifier.size(8.dp))
         Text(
             text = description,
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
+        if (actionButton != null) {
+            Spacer(modifier = Modifier.size(16.dp))
+            actionButton()
+        }
     }
 }

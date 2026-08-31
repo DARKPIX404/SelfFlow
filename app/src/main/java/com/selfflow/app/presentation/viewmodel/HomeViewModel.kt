@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.stateIn
 data class HomeUiState(
     val nextRoutine: Routine? = null,
     val tasks: List<Task> = emptyList(),
+    val completedTasksCount: Int = 0,
+    val totalTasksCount: Int = 0,
     val isLoading: Boolean = true
 )
 
@@ -33,6 +35,8 @@ class HomeViewModel @Inject constructor(
                 .filter { it.startTime.isAfter(now) }
                 .minByOrNull { it.startTime }
 
+            val totalTasksCount = schedule.tasks.size
+            val completedTasksCount = schedule.tasks.count { it.status == Status.DONE }
             val incompleteTasks = schedule.tasks
                 .filter { it.status != Status.DONE }
                 .sortedByDescending { it.priority.ordinal }
@@ -41,6 +45,8 @@ class HomeViewModel @Inject constructor(
             HomeUiState(
                 nextRoutine = nextRoutine,
                 tasks = incompleteTasks,
+                completedTasksCount = completedTasksCount,
+                totalTasksCount = totalTasksCount,
                 isLoading = false
             )
         }

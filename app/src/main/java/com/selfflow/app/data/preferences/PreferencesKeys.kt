@@ -10,4 +10,5 @@ object PreferencesKeys {
     val ALARM_ENABLED = booleanPreferencesKey("alarm_enabled")
     val ROUTINE_TEMPLATES = stringPreferencesKey("routine_templates")
     val ALARM_RINGTONE = stringPreferencesKey("alarm_ringtone")
+    val NOTIFICATION_SOUND = stringPreferencesKey("notification_sound")
 }

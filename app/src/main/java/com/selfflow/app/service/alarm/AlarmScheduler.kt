@@ -6,6 +6,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import com.selfflow.app.data.notification.NotificationSoundOption
+import com.selfflow.app.data.repository.SettingsRepository
 import com.selfflow.app.domain.model.RecurrenceRule
 import com.selfflow.app.domain.model.Routine
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -16,10 +18,14 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 class AlarmScheduler @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val alarmManager: AlarmManager
+    private val alarmManager: AlarmManager,
+    private val settingsRepository: SettingsRepository
 ) {
 
     fun scheduleRoutineAlarm(routine: Routine) {
@@ -80,6 +86,7 @@ class AlarmScheduler @Inject constructor(
             putExtra(EXTRA_ROUTINE_ID, routine.id)
             putExtra(EXTRA_TITLE, routine.title)
             putExtra(EXTRA_NOTIFICATION_TEXT, routine.notificationText ?: routine.title)
+            putExtra(EXTRA_NOTIFICATION_SOUND, currentNotificationSound().key)
             data = Uri.parse("selfflow://routine/${routine.id}/$occurrenceIndex")
         }
 
@@ -260,6 +267,9 @@ class AlarmScheduler @Inject constructor(
         return target.toInstant().toEpochMilli()
     }
 
+    private fun currentNotificationSound(): NotificationSoundOption =
+        runBlocking(Dispatchers.IO) { settingsRepository.notificationSound.first() }
+
     private fun canScheduleExact(): Boolean {
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
                 alarmManager.canScheduleExactAlarms()
@@ -278,6 +288,7 @@ class AlarmScheduler @Inject constructor(
         const val EXTRA_ROUTINE_ID = "routine_id"
         const val EXTRA_TITLE = "title"
         const val EXTRA_NOTIFICATION_TEXT = "notification_text"
+        const val EXTRA_NOTIFICATION_SOUND = "notification_sound"
 
         private const val REQUEST_CODE_WAKE = 9001
         private const val REQUEST_CODE_SLEEP = 9002

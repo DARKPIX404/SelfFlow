@@ -56,7 +56,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.unit.Dp
 import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.selfflow.app.R
 import com.selfflow.app.domain.model.Priority
@@ -98,7 +100,14 @@ fun TasksScreen(
             onRefresh = viewModel::refresh,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(innerPadding),
+            indicator = { state, trigger ->
+                SwipeRefreshIndicator(
+                    state = state,
+                    refreshTriggerDistance = trigger,
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
+            }
         ) {
             Column(
                 modifier = Modifier
@@ -120,7 +129,14 @@ fun TasksScreen(
                         icon = Icons.Default.List,
                         title = stringResource(R.string.tasks_empty_title),
                         description = stringResource(R.string.tasks_empty_description),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        actionButton = {
+                            Button(onClick = viewModel::openAddDialog) {
+                                Icon(Icons.Default.Add, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(stringResource(R.string.add_task_content_description))
+                            }
+                        }
                     )
                 } else {
                     LazyColumn(
