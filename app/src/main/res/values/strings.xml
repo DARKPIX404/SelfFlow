@@ -35,6 +35,14 @@
     <string name="home_alarm_button">Будильник</string>
     <string name="home_settings_button">Настройки</string>
     <string name="home_statistics_title">Статистика</string>
+    <string name="greeting_morning">Доброе утро</string>
+    <string name="greeting_afternoon">Добрый день</string>
+    <string name="greeting_evening">Добрый вечер</string>
+    <string name="greeting_night">Доброй ночи</string>
+    <string name="home_today_date">Сегодня, %1$s</string>
+    <string name="home_task_progress_title">Прогресс задач</string>
+    <string name="home_task_progress_summary">%1$d из %2$d выполнено</string>
+    <string name="home_all_tasks_done">Все задачи выполнены</string>
 
     <!-- Status -->
     <string name="status_todo">К выполнению</string>
@@ -158,6 +166,17 @@
     <string name="ringtone_morning_light">Morning Light</string>
     <string name="ringtone_digital_beep">Digital Beep</string>
     <string name="ringtone_classic_bell">Classic Bell</string>
+
+    <string name="notification_sound_label">Звук уведомлений</string>
+    <string name="notification_sound_preview">Прослушать звук уведомления</string>
+    <string name="notification_sound_system_default">Системный по умолчанию</string>
+    <string name="notification_sound_soft_chime">Мягкий звон</string>
+    <string name="notification_sound_digital_beep">Цифровой сигнал</string>
+    <string name="notification_sound_classic_bell">Классический звонок</string>
+    <string name="notification_channel_routines_title">Напоминания о рутинах</string>
+    <string name="notification_channel_routines_description">Напоминания по распорядку дня</string>
+    <string name="notification_channel_alarms_title">Будильники</string>
+    <string name="notification_channel_alarms_description">Полноэкранные уведомления будильника</string>
     <string name="overlay_permission_button">Разрешение поверх других приложений</string>
     <string name="notification_permission_button">Разрешить уведомления</string>
     <string name="alarm_test_button">Проверить будильник и оверлей</string>
@@ -210,6 +229,7 @@
 
     <!-- App lock / Security -->
     <string name="settings_security_section">Безопасность</string>
+    <string name="settings_sound_section">Звуки</string>
     <string name="settings_app_lock_toggle">Защита приложения PIN-кодом</string>
     <string name="settings_biometric_toggle">Вход по отпечатку / Face ID</string>
     <string name="settings_change_pin_button">Изменить PIN-код</string>

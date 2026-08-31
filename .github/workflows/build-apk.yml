@@ -43,12 +43,17 @@ jobs:
             app/build/reports/
           retention-days: 3
 
+      - name: Rename APK
+        shell: bash
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk "SelfFlow-v${{ github.run_number }}.apk"
+
       - name: Upload APK to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create "v${{ github.run_number }}" \
-            app/build/outputs/apk/debug/app-debug.apk \
-            --title "Debug build v${{ github.run_number }}" \
+            "SelfFlow-v${{ github.run_number }}.apk" \
+            --title "SelfFlow v${{ github.run_number }}" \
             --notes "Автоматическая debug-сборка SelfFlow" \
             --prerelease

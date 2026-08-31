@@ -2,9 +2,11 @@ package com.selfflow.app.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.selfflow.app.data.notification.NotificationSoundOption
 import com.selfflow.app.data.repository.SettingsRepository
 import com.selfflow.app.data.security.SecureStorage
 import com.selfflow.app.service.alarm.AlarmScheduler
+import com.selfflow.app.service.notification.NotificationHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalTime
 import javax.inject.Inject
@@ -18,7 +20,8 @@ import kotlinx.coroutines.launch
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val alarmScheduler: AlarmScheduler,
-    private val secureStorage: SecureStorage
+    private val secureStorage: SecureStorage,
+    private val notificationHelper: NotificationHelper
 ) : ViewModel() {
 
     val wakeTime: StateFlow<LocalTime> = settingsRepository.wakeTime
@@ -59,10 +62,12 @@ class SettingsViewModel @Inject constructor(
     val biometricAvailable: Boolean = secureStorage.isBiometricAvailable()
 
     val isPinSet: StateFlow<Boolean> = secureStorage.isPinSetFlow()
+
+    val notificationSound: StateFlow<NotificationSoundOption> = settingsRepository.notificationSound
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000L),
-            initialValue = false
+            initialValue = NotificationSoundOption.SYSTEM_DEFAULT
         )
 
     fun setWakeTime(time: LocalTime) {
@@ -110,6 +115,13 @@ class SettingsViewModel @Inject constructor(
     fun changePin(pin: String) {
         viewModelScope.launch {
             secureStorage.setPin(pin)
+        }
+    }
+
+    fun setNotificationSound(option: NotificationSoundOption) {
+        viewModelScope.launch {
+            settingsRepository.setNotificationSound(option)
+            notificationHelper.updateRoutineChannel(option)
         }
     }
 
