@@ -113,9 +113,9 @@ export function requestRescheduleReminders(): void {
 export async function rescheduleReminders(): Promise<void> {
   const plugin = ln()
   if (!plugin) return
-  const data = gatherData()
-  if (!data) return
   try {
+    const data = gatherData()
+    if (!data) return
     await ensureChannels()
     const planned = planAll(data.routines, data.habits, data.tasks, data.settings, new Date())
     // идемпотентность: снимаем всё своё (приложение — единственный планировщик)
@@ -134,10 +134,10 @@ export async function rescheduleReminders(): Promise<void> {
 /** Перепланировать нативные будильники wake/sleep (оверлей) + кэш для boot. */
 export async function rescheduleAlarms(): Promise<void> {
   if (!Capacitor.isNativePlatform() && !lnOverride) return
-  const data = gatherData()
-  if (!data) return
-  const sound = getSetting('alarm_sound') ?? 'morning_light'
   try {
+    const data = gatherData()
+    if (!data) return
+    const sound = getSetting('alarm_sound') ?? 'morning_light'
     const repeating = data.settings.alarmEnabled
       ? [
           {

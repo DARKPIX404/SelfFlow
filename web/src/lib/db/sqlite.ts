@@ -3,6 +3,7 @@ import initSqlJs from 'sql.js'
 import type { Database } from 'sql.js'
 import wasmUrl from 'sql.js/dist/sql-wasm.wasm?url'
 import type { DbDriver, SqlParam } from './driver'
+import { sanitizeParams } from './driver'
 import { schemaStatements, runMigrations } from './migrations'
 
 /**
@@ -80,19 +81,22 @@ export async function createSqliteDriver(): Promise<DbDriver> {
     queue = queue.then(fn, fn).catch((e) => console.error('[db] native mirror failed', e))
   }
   const mirrorRun = (sql: string, params: SqlParam[] = []): void => {
-    const values = params.map((p) => (typeof p === 'object' && p !== null ? String(p) : p)) as (string | number | null)[]
+    const values = params.map((p) =>
+      p === undefined ? null : typeof p === 'object' && p !== null ? String(p) : p,
+    ) as (string | number | null)[]
     mirror(() => conn.run(sql, values))
   }
 
   const driver: DbDriver = {
     run(sql, params = []) {
-      memory.run(sql, params)
-      mirrorRun(sql, params)
+      const safe = sanitizeParams(sql, params)
+      memory.run(sql, safe)
+      mirrorRun(sql, safe)
     },
     query<T>(sql: string, params: SqlParam[] = []): T[] {
       const stmt = memory.prepare(sql)
       try {
-        stmt.bind(params)
+        stmt.bind(sanitizeParams(sql, params))
         const rows: T[] = []
         while (stmt.step()) rows.push(stmt.getAsObject() as T)
         return rows
@@ -154,18 +158,22 @@ export async function createSqliteDriver(): Promise<DbDriver> {
     // создана миграциями выше.
     for (const table of tables) {
       if (!table.values || table.values.length === 0) continue
-      const stmt = memory.prepare(`SELECT * FROM ${table.name} LIMIT 0`)
-      const colNames = stmt.getColumnNames()
-      stmt.free()
-      const insert = memory.prepare(
-        `INSERT OR REPLACE INTO ${table.name} (${colNames.join(', ')}) VALUES (${colNames.map(() => '?').join(', ')})`,
-      )
       try {
-        for (const row of table.values) insert.run(row as SqlParam[])
+        const stmt = memory.prepare(`SELECT * FROM ${table.name} LIMIT 0`)
+        const colNames = stmt.getColumnNames()
+        stmt.free()
+        const insert = memory.prepare(
+          `INSERT OR REPLACE INTO ${table.name} (${colNames.join(', ')}) VALUES (${colNames.map(() => '?').join(', ')})`,
+        )
+        try {
+          // нативная строка обрезается до колонок памяти: рассинхрон схем
+          // (старая нативная БД) не должен ронять загрузку целиком
+          for (const row of table.values) insert.run((row as SqlParam[]).slice(0, colNames.length))
+        } finally {
+          insert.free()
+        }
       } catch (e) {
         console.error(`[db] загрузка таблицы ${table.name} пропущена`, e)
-      } finally {
-        insert.free()
       }
     }
   }
