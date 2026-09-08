@@ -126,7 +126,9 @@ export function planTasks(tasks: Task[], now: Date): PlannedNotification[] {
   const out: PlannedNotification[] = []
   for (const t of tasks) {
     if (!t.due_date || t.status === 'DONE') continue
-    const at = atTime(new Date(`${t.due_date}T00:00:00`), '09:00')
+    // due_date хранится как 'YYYY-MM-DD 00:00:00.000Z' — берём только дату,
+    // иначе `${due_date}T00:00:00` даёт Invalid Date
+    const at = atTime(new Date(`${t.due_date.slice(0, 10)}T00:00:00`), '09:00')
     if (at.getTime() <= now.getTime()) continue
     out.push({
       id: TASK_BASE + (hashId(`task:${t.id}`) % TASK_RANGE),

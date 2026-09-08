@@ -2,6 +2,7 @@ import initSqlJs from 'sql.js'
 import type { Database } from 'sql.js'
 import wasmUrl from 'sql.js/dist/sql-wasm.wasm?url'
 import type { DbDriver, SqlParam } from './driver'
+import { sanitizeParams } from './driver'
 
 export const DB_STORAGE_KEY = 'selfflow.db.v1'
 
@@ -43,13 +44,14 @@ export async function createSqlJsDriver(): Promise<DbDriver> {
 
   const driver: DbDriver = {
     run(sql, params = []) {
-      db.run(sql, params)
+      const safe = sanitizeParams(sql, params)
+      db.run(sql, safe)
       persist()
     },
     query<T>(sql: string, params: SqlParam[] = []): T[] {
       const stmt = db.prepare(sql)
       try {
-        stmt.bind(params)
+        stmt.bind(sanitizeParams(sql, params))
         const rows: T[] = []
         while (stmt.step()) rows.push(stmt.getAsObject() as T)
         return rows
