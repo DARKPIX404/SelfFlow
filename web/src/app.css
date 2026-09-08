@@ -1,0 +1,172 @@
+/* SelfFlow 2.0 — дизайн-токены Omarchy Samurai (см. docs/DESIGN_SYSTEM.md) */
+
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #151311;
+  --bg-deep: #100e0c;
+  --surface: #232019;
+  --surface-2: #2c2820;
+  --border: #3a342a;
+  --text: #f0e6cc;
+  --text-2: #d3c5a5;
+  --text-muted: #5c554d;
+  --accent: #c9403b;
+  --accent-soft: rgba(201, 64, 59, 0.16);
+  --success: #7ba05b;
+  --warn: #d9a441;
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f0e6cc;
+  --bg-deep: #e4d7b8;
+  --surface: #faf3df;
+  --surface-2: #fffdf4;
+  --border: #c9bc9c;
+  --text: #232019;
+  --text-2: #5c554d;
+  --text-muted: #8a8072;
+  --accent: #b03a36;
+  --accent-soft: rgba(176, 58, 54, 0.14);
+  --success: #7ba05b;
+  --warn: #d9a441;
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+}
+
+:root {
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-micro: 120ms;
+  --dur-std: 200ms;
+  --dur-sheet: 280ms;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg-deep);
+  color: var(--text);
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    'Noto Sans',
+    sans-serif;
+  font-size: 15px;
+  font-weight: 450;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  background: var(--bg);
+  position: relative;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.35);
+}
+
+h1, h2, h3, h4, p {
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input, textarea {
+  font-family: inherit;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+/* Общие утилиты экранов */
+.screen {
+  min-height: 100dvh;
+  padding-bottom: 96px;
+}
+
+.screen-body {
+  padding: 4px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 10px 4px 2px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.link-btn {
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 10px 4px;
+  min-height: 44px;
+  text-align: left;
+}
+
+.icon-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--dur-micro);
+}
+
+.icon-btn:active {
+  background: var(--surface-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
