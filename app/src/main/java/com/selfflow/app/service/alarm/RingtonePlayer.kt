@@ -14,6 +14,7 @@ import com.selfflow.app.data.alarm.RingtoneOption
 class RingtonePlayer(private val context: Context) {
 
     private var mediaPlayer: MediaPlayer? = null
+    private var vibrator: Vibrator? = null
 
     fun play(option: RingtoneOption) {
         stop()
@@ -45,18 +46,21 @@ class RingtonePlayer(private val context: Context) {
         mediaPlayer?.stop()
         mediaPlayer?.release()
         mediaPlayer = null
+        vibrator?.cancel()
+        vibrator = null
     }
 
     private fun vibrate() {
-        val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val currentVibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
         } else {
             @Suppress("DEPRECATION")
             context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
+        vibrator = currentVibrator
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator.vibrate(
+            currentVibrator.vibrate(
                 VibrationEffect.createWaveform(
                     longArrayOf(0, 500, 500),
                     0
@@ -64,7 +68,7 @@ class RingtonePlayer(private val context: Context) {
             )
         } else {
             @Suppress("DEPRECATION")
-            vibrator.vibrate(longArrayOf(0, 500, 500), 0)
+            currentVibrator.vibrate(longArrayOf(0, 500, 500), 0)
         }
     }
 }

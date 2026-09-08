@@ -111,6 +111,7 @@ class AlarmOverlayActivity : ComponentActivity() {
 
     private fun snoozeAlarm() {
         // TODO: schedule snooze via AlarmScheduler
+        stopService(Intent(this, AlarmService::class.java))
         ringtonePlayer?.stop()
         finish()
     }
