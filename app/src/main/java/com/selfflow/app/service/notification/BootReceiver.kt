@@ -26,6 +26,7 @@ class BootReceiver : BroadcastReceiver() {
             try {
                 val routines = routineRepository.getActiveRoutines().first()
                 routines.forEach { alarmScheduler.scheduleRoutineAlarm(it) }
+                alarmScheduler.rescheduleWakeSleepAlarms()
             } finally {
                 pendingResult.finish()
             }

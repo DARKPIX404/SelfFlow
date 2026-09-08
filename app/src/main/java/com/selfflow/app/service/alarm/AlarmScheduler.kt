@@ -74,6 +74,19 @@ class AlarmScheduler @Inject constructor(
 
     fun cancelSleepAlarm() = cancelDaily(REQUEST_CODE_SLEEP, ACTION_SLEEP_ALARM)
 
+    fun rescheduleWakeSleepAlarms() {
+        val (enabled, wake, sleep) = runBlocking(Dispatchers.IO) {
+            Triple(
+                settingsRepository.alarmEnabled.first(),
+                settingsRepository.wakeTime.first(),
+                settingsRepository.sleepTime.first()
+            )
+        }
+        if (!enabled) return
+        scheduleWakeAlarm(wake)
+        scheduleSleepAlarm(sleep)
+    }
+
     private fun scheduleRoutineOccurrence(
         routine: Routine,
         occurrenceIndex: Int,
