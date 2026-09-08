@@ -15,23 +15,47 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Build web app
+        working-directory: web
+        run: npm run build
+
+      - name: Sync Capacitor Android project
+        working-directory: web
+        run: npx cap sync android
+
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Install Android platform and build-tools
+        run: |
+          sdkmanager --install "platforms;android-36" "build-tools;36.0.0"
+
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Build debug APK
+        working-directory: web/android
         shell: bash
         run: |
           set -o pipefail
-          ./gradlew :app:assembleDebug --stacktrace --no-daemon 2>&1 | tee build.log
+          ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee build.log
 
       - name: Upload build logs on failure
         if: failure()
@@ -39,14 +63,14 @@ jobs:
         with:
           name: build-logs
           path: |
-            build.log
-            app/build/reports/
+            web/android/build.log
+            web/android/app/build/reports/
           retention-days: 3
 
       - name: Rename APK
         shell: bash
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk "SelfFlow-v${{ github.run_number }}.apk"
+          cp web/android/app/build/outputs/apk/debug/app-debug.apk "SelfFlow-v${{ github.run_number }}.apk"
 
       - name: Upload APK to release
         env:
@@ -55,5 +79,5 @@ jobs:
           gh release create "v${{ github.run_number }}" \
             "SelfFlow-v${{ github.run_number }}.apk" \
             --title "SelfFlow v${{ github.run_number }}" \
-            --notes "Автоматическая debug-сборка SelfFlow" \
+            --notes "Автоматическая debug-сборка SelfFlow 2.0 (Capacitor)" \
             --prerelease

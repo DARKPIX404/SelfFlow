@@ -11,3 +11,16 @@
 local.properties
 android-sdk/
 build.log
+
+# SelfFlow 2.0 (web/) — локальные артефакты
+jdk-21/
+shots-e2e/
+web/node_modules/
+web/dist/
+web/.env
+web/android/.gradle/
+web/android/local.properties
+web/android/build.log
+web/android/app/build/
+# gradle wrapper и нативный код web/android — В репозитории (не игнорировать!)
+
