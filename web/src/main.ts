@@ -1,44 +1,69 @@
 import { mount } from 'svelte'
 import './app.css'
 import App from './App.svelte'
-import { prepareDbForUser, restoreNativeSession, prepareDbForUserNative } from './lib/auth/session.svelte'
-import { initDb } from './lib/db'
-import { initSync } from './lib/sync/sync'
-import { syncStatus, updatePendingCount } from './lib/sync/status.svelte'
+import ErrorScreen from './ErrorScreen.svelte'
 
-await restoreNativeSession()
-prepareDbForUser()
-await prepareDbForUserNative()
-await initDb()
-initSync()
-updatePendingCount()
-// модули settings/dayState могли загрузиться раньше initDb (восстановленная
-// сессия) — теперь, когда БД готова, перечитываем сохранённое состояние
-import { getSetting, theme } from './lib/settings.svelte'
-if (getSetting('theme') === 'light') theme.value = 'light'
-import { refreshDayState } from './lib/dayState.svelte'
-refreshDayState()
+// --- Диагностируемость: любая фатальная ошибка — на экран, не в чёрный провал.
+// Оверлей ставится ДО старта инициализации и ловит и ошибки стартапа
+// (start().catch), и поздние падения (глобальные слушатели).
 
-// нативные уведомления/будильники: каналы + первое планирование + перепланирование на pull-sync
-import { initNotifications } from './lib/notifications'
-initNotifications()
-
-// отладочный доступ к состоянию синка и очереди (e2e-дым, поддержка)
-import { getDb } from './lib/db'
-import { pb } from './lib/auth/pb'
-import { syncAll } from './lib/sync/sync'
-import { __setLocalNotificationsForTest, rescheduleReminders } from './lib/notifications'
-;(window as unknown as { __sf: unknown }).__sf = {
-  syncStatus,
-  getDb,
-  pb,
-  syncAll,
-  __setLocalNotificationsForTest,
-  rescheduleReminders,
+function showErrorOverlay(err: unknown): void {
+  console.error('[startup] fatal', err)
+  if (document.getElementById('error-overlay')) return
+  const target = document.createElement('div')
+  target.id = 'error-overlay'
+  document.body.appendChild(target)
+  mount(ErrorScreen, { target, props: { error: err } })
 }
 
-const app = mount(App, {
-  target: document.getElementById('app')!,
+window.addEventListener('error', (e) => showErrorOverlay(e.error ?? e.message))
+window.addEventListener('unhandledrejection', (e) => {
+  e.preventDefault()
+  showErrorOverlay(e.reason)
 })
 
-export default app
+async function start(): Promise<void> {
+  const { prepareDbForUser, restoreNativeSession, prepareDbForUserNative } = await import(
+    './lib/auth/session.svelte'
+  )
+  const { initDb } = await import('./lib/db')
+
+  await restoreNativeSession()
+  prepareDbForUser()
+  await prepareDbForUserNative()
+  await initDb()
+
+  const { initSync, syncAll } = await import('./lib/sync/sync')
+  const { syncStatus, updatePendingCount } = await import('./lib/sync/status.svelte')
+  initSync()
+  updatePendingCount()
+
+  // модули settings/dayState могли загрузиться раньше initDb (восстановленная
+  // сессия) — теперь, когда БД готова, перечитываем сохранённое состояние
+  const { getSetting, theme } = await import('./lib/settings.svelte')
+  if (getSetting('theme') === 'light') theme.value = 'light'
+  const { refreshDayState } = await import('./lib/dayState.svelte')
+  refreshDayState()
+
+  // нативные уведомления/будильники: каналы + первое планирование + перепланирование на pull-sync
+  const { initNotifications, __setLocalNotificationsForTest, rescheduleReminders } = await import(
+    './lib/notifications'
+  )
+  initNotifications()
+
+  // отладочный доступ к состоянию синка и очереди (e2e-дым, поддержка)
+  const { getDb } = await import('./lib/db')
+  const { pb } = await import('./lib/auth/pb')
+  ;(window as unknown as { __sf: unknown }).__sf = {
+    syncStatus,
+    getDb,
+    pb,
+    syncAll,
+    __setLocalNotificationsForTest,
+    rescheduleReminders,
+  }
+
+  mount(App, { target: document.getElementById('app')! })
+}
+
+start().catch(showErrorOverlay)
