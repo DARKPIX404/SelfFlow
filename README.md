@@ -43,6 +43,8 @@ API 26 (Android 8.0)
 
 Каждый пуш в `master` собирает debug APK через GitHub Actions и выкладывает в [GitHub Releases](https://github.com/DARKPIX404/SelfFlow/releases). APK подписан debug-ключом и устанавливается на телефон как обычное приложение.
 
+Сайт с кнопкой скачивания всегда актуальной версии: [darkpix404.github.io/SelfFlow](https://darkpix404.github.io/SelfFlow/) (статика в `docs/`, публикуется через GitHub Pages).
+
 ### Релизная сборка
 
 Для выпуска релиза нужно настроить подпись в `app/build.gradle.kts`:

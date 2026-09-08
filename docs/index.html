@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SelfFlow — приложение для саморазвития</title>
+  <meta name="description" content="SelfFlow — Android-приложение для саморазвития: распорядок дня, задачи, заметки, календарь, будильник, виджеты и статистика. Скачайте свежую версию APK.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23675dd8'/%3E%3Cpath d='M18 44c6-2 8-8 8-14s2-12 8-14' stroke='%23fff' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='40' cy='46' r='4' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="#top">
+        <svg class="brand-logo" viewBox="0 0 64 64" aria-hidden="true">
+          <rect width="64" height="64" rx="14" fill="currentColor" opacity="0.18"/>
+          <path d="M18 44c6-2 8-8 8-14s2-12 8-14" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round"/>
+          <circle cx="40" cy="46" r="4" fill="currentColor"/>
+        </svg>
+        <span>SelfFlow</span>
+      </a>
+      <a class="header-link" href="https://github.com/DARKPIX404/SelfFlow" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="container hero-inner">
+        <h1>SelfFlow</h1>
+        <p class="tagline">Приложение для саморазвития: распорядок дня, задачи, заметки и календарь — всё в одном месте.</p>
+
+        <div class="download-block">
+          <a id="download-btn" class="btn-primary" href="https://github.com/DARKPIX404/SelfFlow/releases/latest">
+            Скачать APK
+          </a>
+          <p id="release-info" class="release-info" hidden>
+            <span id="release-version"></span> · <span id="release-date"></span>
+          </p>
+          <p class="download-note">Android 8.0 и выше · бесплатно · без рекламы</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="features">
+      <div class="container">
+        <h2>Возможности</h2>
+        <div class="features-grid">
+          <article class="feature-card">
+            <h3>Распорядок дня</h3>
+            <p>События с повторениями, настраиваемыми уведомлениями и шаблонами рутин для целых диапазонов дат.</p>
+          </article>
+          <article class="feature-card">
+            <h3>Задачи</h3>
+            <p>Статусы, приоритеты, сроки и привязка к распорядку. Фильтрация по статусу.</p>
+          </article>
+          <article class="feature-card">
+            <h3>Заметки</h3>
+            <p>Заметки с заголовками, тегами и быстрым поиском.</p>
+          </article>
+          <article class="feature-card">
+            <h3>Календарь</h3>
+            <p>Месячный вид с отметками дел на днях и деталями выбранного дня.</p>
+          </article>
+          <article class="feature-card">
+            <h3>Будильник и напоминания</h3>
+            <p>Напоминания ложиться спать и просыпаться, оверлей поверх других приложений.</p>
+          </article>
+          <article class="feature-card">
+            <h3>Виджет</h3>
+            <p>Ближайшая рутина и оставшиеся задачи дня прямо на рабочем столе.</p>
+          </article>
+          <article class="feature-card">
+            <h3>Статистика</h3>
+            <p>Выполнение задач, распределение по статусам и приоритетам, активность по рутинам.</p>
+          </article>
+          <article class="feature-card">
+            <h3>Экспорт и импорт</h3>
+            <p>Резервное копирование всех данных в JSON через системный файловый доступ.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="install">
+      <div class="container">
+        <h2>Как установить</h2>
+        <ol class="install-steps">
+          <li>
+            <strong>Скачайте APK</strong> по кнопке выше.
+          </li>
+          <li>
+            Откройте загруженный файл. При необходимости разрешите установку из
+            неизвестных источников для браузера — Android спросит об этом сам.
+          </li>
+          <li>
+            Нажмите <strong>«Установить»</strong> — готово. Данные останутся на устройстве
+            при обновлении поверх старой версии.
+          </li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p>SelfFlow · <a href="https://github.com/DARKPIX404/SelfFlow" target="_blank" rel="noopener">GitHub</a> · <a href="https://github.com/DARKPIX404/SelfFlow/releases" target="_blank" rel="noopener">Все версии</a></p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
