@@ -1,9 +1,9 @@
-import { CapacitorSQLite } from '@capacitor-community/sqlite'
+import { CapacitorSQLite, SQLiteConnection, type SQLiteDBConnection } from '@capacitor-community/sqlite'
 import initSqlJs from 'sql.js'
 import type { Database } from 'sql.js'
 import wasmUrl from 'sql.js/dist/sql-wasm.wasm?url'
 import type { DbDriver, SqlParam } from './driver'
-import { schemaStatements } from './migrations'
+import { schemaStatements, runMigrations } from './migrations'
 
 /**
  * Нативный драйвер БД (Android). Репозитории синхронные, поэтому здесь
@@ -16,6 +16,10 @@ import { schemaStatements } from './migrations'
  *   в нативную БД через сериализованную очередь (источник правды между
  *   запусками и защита от eviction WebView-storage).
  *
+ * Работаем через SQLiteConnection-обёртку с checkConnectionsConsistency() —
+ * raw-вызовы createConnection на «протухшем» подключении (после
+ * deleteDatabase / пересоздания WebView) бросают непонятные ошибки.
+ *
  * Uint8Array-параметры не используются репозиториями — в нативное зеркало
  * уходят только string | number | null.
  */
@@ -23,78 +27,67 @@ import { schemaStatements } from './migrations'
 const DB_NAME = 'selfflow-db'
 const DB_VERSION = 1
 
+const sqlite = new SQLiteConnection(CapacitorSQLite)
+
 interface JsonTable {
   name: string
-  schema?: string
   values?: unknown[][]
 }
 
 interface JsonExport {
-  tables?: JsonTable[]
+  export?: {
+    tables?: JsonTable[]
+  }
 }
 
-/** Полное удаление нативной БД (смена пользователя / сброс). */
-export async function deleteSqliteDatabase(): Promise<void> {
-  await CapacitorSQLite.close({ database: DB_NAME }).catch(() => {})
-  await CapacitorSQLite.deleteDatabase({ database: DB_NAME }).catch(() => {})
+/** Подключение к нативной БД с восстановлением консистентности состояния плагина. */
+async function nativeConnection(): Promise<SQLiteDBConnection> {
+  await sqlite.checkConnectionsConsistency().catch((e) => {
+    console.error('[db] checkConnectionsConsistency failed (продолжаем)', e)
+  })
+  const existing = await sqlite.isConnection(DB_NAME, false).catch(() => ({ result: false }))
+  if (existing.result) {
+    return sqlite.retrieveConnection(DB_NAME, false)
+  }
+  return sqlite.createConnection(DB_NAME, false, 'no-encryption', DB_VERSION, false)
 }
 
 export async function createSqliteDriver(): Promise<DbDriver> {
-  const SQL = await initSqlJs({ locateFile: () => wasmUrl })
+  let SQL: Awaited<ReturnType<typeof initSqlJs>>
+  try {
+    SQL = await initSqlJs({ locateFile: () => wasmUrl })
+  } catch (e) {
+    throw new Error(`[db] sql.js (wasm-движок) не загрузился: ${String(e)}`)
+  }
   const memory: Database = new SQL.Database()
 
-  // Нативное подключение (idempotent — может уже существовать).
-  await CapacitorSQLite.createConnection({ database: DB_NAME, version: DB_VERSION }).catch(() => {})
-  await CapacitorSQLite.open({ database: DB_NAME }).catch(() => {})
+  // Нативное подключение: открываем, если ещё не открыто. Ошибки не глотаем
+  // молча — без нативной БД зеркало бессмысленно, лучше увидеть причину.
+  const conn = await nativeConnection()
+  try {
+    const isOpen = await conn.isDBOpen().catch(() => ({ result: false }))
+    if (!isOpen.result) await conn.open()
+  } catch (e) {
+    throw new Error(`[db] открытие нативной БД '${DB_NAME}' не удалось: ${String(e)}`)
+  }
 
   // Сериализованная очередь записи в нативную БД — порядок строго тот же,
-  // что и у синхронных мутаций памяти.
+  // что и у синхронных мутаций памяти. Ошибки зеркала логируем: память уже
+  // обновлена, рассинхрон компенсируется полной перезаписью при следующем
+  // запуске, но молчать здесь нельзя.
   let queue: Promise<unknown> = Promise.resolve()
-  const native = (fn: () => Promise<unknown>): void => {
-    queue = queue.then(fn, fn)
+  const mirror = (fn: () => Promise<unknown>): void => {
+    queue = queue.then(fn, fn).catch((e) => console.error('[db] native mirror failed', e))
   }
-  const nativeRun = (sql: string, params: SqlParam[] = []): void => {
+  const mirrorRun = (sql: string, params: SqlParam[] = []): void => {
     const values = params.map((p) => (typeof p === 'object' && p !== null ? String(p) : p)) as (string | number | null)[]
-    native(() => CapacitorSQLite.run({ database: DB_NAME, statement: sql, values }))
-  }
-
-  // 1) Если нативная БД пустая (первый запуск) — создаём там схему.
-  //    Миграции памяти (runMigrations в initDb) её продублируют в памяти
-  //    (все CREATE ... IF NOT EXISTS), поэтому отдельная загрузка не нужна.
-  // 2) Иначе загружаем нативные данные в память — runMigrations увидит
-  //    _migrations из экспорта и станет no-op.
-  const exported = (await CapacitorSQLite.exportToJson({
-    database: DB_NAME,
-    jsonexportmode: 'full',
-  })) as unknown as JsonExport
-
-  const isFresh = !exported.tables || exported.tables.length === 0
-  if (isFresh) {
-    for (const statement of schemaStatements()) {
-      await CapacitorSQLite.execute({ database: DB_NAME, statements: statement })
-    }
-  }
-
-  for (const table of exported.tables ?? []) {
-    if (table.schema) memory.run(table.schema)
-    const stmt = memory.prepare(`SELECT * FROM ${table.name} LIMIT 0`)
-    const colNames = stmt.getColumnNames()
-    stmt.free()
-    if (!table.values || table.values.length === 0) continue
-    const insert = memory.prepare(
-      `INSERT OR REPLACE INTO ${table.name} (${colNames.join(', ')}) VALUES (${colNames.map(() => '?').join(', ')})`,
-    )
-    try {
-      for (const row of table.values) insert.run(row as SqlParam[])
-    } finally {
-      insert.free()
-    }
+    mirror(() => conn.run(sql, values))
   }
 
   const driver: DbDriver = {
     run(sql, params = []) {
       memory.run(sql, params)
-      nativeRun(sql, params)
+      mirrorRun(sql, params)
     },
     query<T>(sql: string, params: SqlParam[] = []): T[] {
       const stmt = memory.prepare(sql)
@@ -112,27 +105,89 @@ export async function createSqliteDriver(): Promise<DbDriver> {
     },
     transaction(fn) {
       memory.run('BEGIN')
-      nativeRun('BEGIN')
+      mirrorRun('BEGIN')
       try {
         fn()
         memory.run('COMMIT')
-        nativeRun('COMMIT')
+        mirrorRun('COMMIT')
       } catch (e) {
         memory.run('ROLLBACK')
-        nativeRun('ROLLBACK')
+        mirrorRun('ROLLBACK')
         throw e
       }
     },
     reset() {
       memory.close()
-      native(() =>
-        CapacitorSQLite.close({ database: DB_NAME })
-          .catch(() => {})
+      mirror(() =>
+        conn
+          .close()
+          .catch((e) => console.error('[db] close before reset failed', e))
           .then(() => CapacitorSQLite.deleteDatabase({ database: DB_NAME }))
           .catch((e) => console.error('[db] native reset failed', e)),
       )
     },
   }
 
+  // Полная схема памяти (миграции заодно зеркалятся в нативную БД — там тоже
+  // CREATE ... IF NOT EXISTS, дубли безвредны).
+  runMigrations(driver)
+
+  // Выгружаем нативные данные. exportToJson НЕ должен ронять стартап:
+  // пустая/битая/несовместимая выгрузка = трактуем как fresh БД.
+  let tables: JsonTable[] = []
+  try {
+    const exported = (await conn.exportToJson('full')) as unknown as JsonExport
+    tables = exported.export?.tables ?? []
+  } catch (e) {
+    console.error('[db] exportToJson failed, считаем БД пустой', e)
+  }
+
+  if (tables.length === 0) {
+    // Первый запуск (или выгрузка пустая): создаём схему на диске, чтобы
+    // файл сразу был валидной SQLite с полной схемой.
+    for (const statement of schemaStatements()) {
+      await conn.execute(statement).catch((e) => console.error('[db] native schema failed', e))
+    }
+  } else {
+    // Загружаем строки в память. Схему из export НЕ используем — в v8 плагина
+    // JsonTable.schema это JsonColumn[], а не CREATE-строка; схема памяти уже
+    // создана миграциями выше.
+    for (const table of tables) {
+      if (!table.values || table.values.length === 0) continue
+      const stmt = memory.prepare(`SELECT * FROM ${table.name} LIMIT 0`)
+      const colNames = stmt.getColumnNames()
+      stmt.free()
+      const insert = memory.prepare(
+        `INSERT OR REPLACE INTO ${table.name} (${colNames.join(', ')}) VALUES (${colNames.map(() => '?').join(', ')})`,
+      )
+      try {
+        for (const row of table.values) insert.run(row as SqlParam[])
+      } catch (e) {
+        console.error(`[db] загрузка таблицы ${table.name} пропущена`, e)
+      } finally {
+        insert.free()
+      }
+    }
+  }
+
   return driver
+}
+
+/** Полное удаление нативной БД (смена пользователя / сброс). */
+export async function deleteSqliteDatabase(): Promise<void> {
+  await sqlite.checkConnectionsConsistency().catch((e) => {
+    console.error('[db] checkConnectionsConsistency в deleteSqliteDatabase failed', e)
+  })
+  const isConn = await sqlite.isConnection(DB_NAME, false).catch(() => ({ result: false }))
+  if (isConn.result) {
+    const conn = await sqlite.retrieveConnection(DB_NAME, false).catch(() => null)
+    if (conn) {
+      const isOpen = await conn.isDBOpen().catch(() => ({ result: false }))
+      if (isOpen.result) await conn.close().catch((e) => console.error('[db] close перед delete failed', e))
+      await sqlite.closeConnection(DB_NAME, false).catch((e) => console.error('[db] closeConnection failed', e))
+    }
+  }
+  await CapacitorSQLite.deleteDatabase({ database: DB_NAME }).catch((e) =>
+    console.error('[db] deleteDatabase failed', e),
+  )
 }

@@ -57,7 +57,7 @@ src/
 │   ├── sync/               # push/pull синхронизация PocketBase
 │   └── ui/                 # дизайн-система (+ haptics.ts — @capacitor/haptics на нативе)
 ├── screens/                # auth/, today/, routines/, tasks/, notes/, more/, onboarding/
-└── main.ts                 # restoreNativeSession → prepareDb → initDb → initNotifications
+└── main.ts                 # ErrorScreen-оверлей (error/unhandledrejection) → стартап → mount(App)
 
 android/app/src/main/java/com/selfflow/app/alarm/   # кастомный Kotlin-плагин
 ├── AlarmOverlayPlugin.kt # scheduleAlarm/cancelAlarm/rescheduleAll/права оверлея/showOverlayNow
