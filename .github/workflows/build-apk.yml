@@ -28,6 +28,12 @@ jobs:
         working-directory: web
         run: npm ci
 
+      # номер релиза (run_number) встраивается в бандл — приложение сравнивает
+      # его с тегом последнего GitHub-релиза и предлагает in-app обновление
+      - name: Inject release number
+        working-directory: web
+        run: echo "VITE_RELEASE_NUM=${{ github.run_number }}" > .env
+
       - name: Build web app
         working-directory: web
         run: npm run build
