@@ -11,7 +11,7 @@
   import Fab from '$lib/ui/Fab.svelte'
   import ListItem from '$lib/ui/ListItem.svelte'
   import SearchBar from '$lib/ui/SearchBar.svelte'
-  import { push } from '$lib/nav.svelte'
+  import { replaceStack } from '$lib/nav.svelte'
   import { haptic } from '$lib/ui/haptics'
 
   function reload(): Note[] {
@@ -60,12 +60,12 @@
     haptic('light')
     const note = notes.create(user.id, { title: '', content: '' })
     noteVersion++
-    push(['notes', note.id])
+    replaceStack(['notes', note.id])
   }
 
   function open(n: Note) {
     haptic('light')
-    push(['notes', n.id])
+    replaceStack(['notes', n.id])
   }
 </script>
 

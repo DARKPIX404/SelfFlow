@@ -3,7 +3,7 @@ import { LocalNotifications, type Channel, type LocalNotificationSchema } from '
 import { getDb } from '../db'
 import { routines, habits, tasks } from '../db/repositories'
 import { session } from '../auth/session.svelte'
-import { getSetting, alarmSoundKey } from '../settings.svelte'
+import { getSetting, alarmSoundKey, notificationSoundKey } from '../settings.svelte'
 import { planAll, type PlannedNotification } from './planner'
 import { AlarmOverlay } from '../native/alarmOverlay'
 
@@ -11,36 +11,17 @@ import { AlarmOverlay } from '../native/alarmOverlay'
  * Планирование нативных уведомлений и будильников.
  *
  * - Рутины/привычки/задачи/digest — @capacitor/local-notifications, каналы
- *   routine_reminders (короткий LoFi-звук lofi_chime) и alarm_channel
- *   (alarm_standard). Плагин сам восстанавливает их после перезагрузки устройства.
+ *   под каждый выбранный звук (id содержит ключ звука: звук канала в Android
+ *   нельзя сменить после создания, поэтому меняем звук = создаём канал с новым
+ *   id и удаляем старые). Плагин сам восстанавливает уведомления после
+ *   перезагрузки устройства.
  * - Wake/sleep-будильники «поверх окон» — кастомный AlarmOverlayPlugin
- *   (AlarmManager setRepeating + foreground-сервис + OverlayActivity);
- *   расписание кэшируется нативно и перепланируется BootReceiver'ом.
+ *   (AlarmManager exact + foreground-сервис + full-screen intent;
+ *   расписание кэшируется нативно и перепланируется BootReceiver'ом).
  *
  * Всё идемпотентно: отменяем все свои уведомления по pending-списку и
  * планируем заново. В браузере (и в тестах без мока) — no-op.
  */
-
-const CHANNELS: Channel[] = [
-  {
-    id: 'routine_reminders',
-    name: 'Напоминания распорядка',
-    description: 'Рутины, привычки и задачи',
-    importance: 5, // IMPORTANCE_HIGH
-    sound: 'lofi_chime',
-    vibration: true,
-    visibility: 1,
-  },
-  {
-    id: 'alarm_channel',
-    name: 'Утренний дайджест',
-    description: 'Дайджест дня по времени подъёма',
-    importance: 5,
-    sound: 'alarm_standard',
-    vibration: true,
-    visibility: 1,
-  },
-]
 
 // --- тестовый шов: e2e подменяет плагин моком ---
 
@@ -49,6 +30,10 @@ interface LocalNotificationsLike {
   cancel(o: { notifications: { id: number }[] }): Promise<void>
   getPending(): Promise<{ notifications: { id: number }[] }>
   createChannel(c: Channel): Promise<void>
+  deleteChannel?(o: { id: string }): Promise<void>
+  listChannels?(): Promise<{ channels: Channel[] }>
+  requestPermissions?(): Promise<{ display: string }>
+  requestExactNotificationSetting?(): Promise<void>
 }
 
 let lnOverride: LocalNotificationsLike | null = null
@@ -61,16 +46,68 @@ function ln(): LocalNotificationsLike | null {
   return Capacitor.isNativePlatform() ? LocalNotifications : null
 }
 
-let channelsReady = false
+// --- каналы: id зависит от звука, старые удаляем ---
+
+/** id канала напоминаний под текущий звук уведомлений */
+export function reminderChannelId(): string {
+  return `routine_reminders__${notificationSoundKey()}`
+}
+
+/** id канала дайджеста под текущий звук будильника */
+export function alarmChannelId(): string {
+  return `alarm_channel__${alarmSoundKey()}`
+}
+
+let channelsReadyKey = ''
 
 async function ensureChannels(): Promise<void> {
-  if (channelsReady) return
   const plugin = ln()
   if (!plugin) return
-  for (const channel of CHANNELS) {
-    await plugin.createChannel(channel).catch(() => {})
+  const reminderId = reminderChannelId()
+  const alarmId = alarmChannelId()
+  const readyKey = `${reminderId}|${alarmId}`
+  if (channelsReadyKey === readyKey) return
+
+  const reminderSound = notificationSoundKey()
+  const alarmSound = alarmSoundKey()
+  const channels: Channel[] = [
+    {
+      id: reminderId,
+      name: 'Напоминания распорядка',
+      description: 'Рутины, привычки и задачи',
+      importance: 5, // IMPORTANCE_HIGH
+      sound: reminderSound === 'system' ? undefined : reminderSound,
+      vibration: true,
+      visibility: 1,
+    },
+    {
+      id: alarmId,
+      name: 'Утренний дайджест',
+      description: 'Дайджест дня по времени подъёма',
+      importance: 5,
+      sound: alarmSound === 'system' ? undefined : alarmSound,
+      vibration: true,
+      visibility: 1,
+    },
+  ]
+  for (const channel of channels) {
+    await plugin.createChannel(channel).catch((e) => console.error('[notifications] createChannel failed', e))
   }
-  channelsReady = true
+  // чистим наши каналы с другим звуком (их звук уже не сменить)
+  const listed = await plugin.listChannels?.().catch(() => null)
+  if (listed) {
+    const current = new Set([reminderId, alarmId])
+    for (const ch of listed.channels ?? []) {
+      if (
+        typeof ch.id === 'string' &&
+        (ch.id.startsWith('routine_reminders__') || ch.id.startsWith('alarm_channel__')) &&
+        !current.has(ch.id)
+      ) {
+        await plugin.deleteChannel?.({ id: ch.id }).catch(() => {})
+      }
+    }
+  }
+  channelsReadyKey = readyKey
 }
 
 function toSchema(p: PlannedNotification): LocalNotificationSchema {
@@ -78,8 +115,8 @@ function toSchema(p: PlannedNotification): LocalNotificationSchema {
     id: p.id,
     title: p.title,
     body: p.body,
-    channelId: p.channelId,
-    schedule: p.every ? { at: p.at, every: p.every } : { at: p.at },
+    channelId: p.channelId === 'alarm_channel' ? alarmChannelId() : reminderChannelId(),
+    schedule: p.every ? { at: p.at, every: p.every, allowWhileIdle: true } : { at: p.at, allowWhileIdle: true },
     extra: p.extra,
   }
 }
@@ -165,14 +202,21 @@ export async function rescheduleAlarms(): Promise<void> {
 }
 
 /**
- * Инициализация при старте приложения: каналы, разрешения, первое
- * планирование, перепланирование после каждого pull-sync.
+ * Инициализация при старте приложения: разрешения (Android 13+ молча не
+ * показывает уведомления без runtime-разрешения), каналы, первое планирование,
+ * перепланирование после каждого pull-sync.
  */
 export function initNotifications(): void {
-  if (!Capacitor.isNativePlatform() && !lnOverride) return
+  const plugin = ln()
+  if (!plugin) return
+  // POST_NOTIFICATIONS (API 33+): без запроса уведомления просто не приходят
+  plugin.requestPermissions?.().catch((e) => console.error('[notifications] requestPermissions failed', e))
+  // точные алярмы (API 31+): планировщик сам спросит при необходимости
+  plugin.requestExactNotificationSetting?.().catch(() => {})
   void rescheduleReminders()
   void rescheduleAlarms()
   window.addEventListener('selfflow:synced', () => {
+    channelsReadyKey = '' // звук мог смениться на другом устройстве
     requestRescheduleReminders()
   })
 }

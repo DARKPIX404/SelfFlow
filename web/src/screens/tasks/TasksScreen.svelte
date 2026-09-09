@@ -341,6 +341,9 @@
   }
   .task-row :global(.item) {
     flex: 1;
+    /* без min-width:0 flex-элемент не сжимается ниже min-content — длинный
+       текст раздувал карточку за край экрана и утаскивал кебаб с собой */
+    min-width: 0;
     border-radius: 0;
   }
   .prio {

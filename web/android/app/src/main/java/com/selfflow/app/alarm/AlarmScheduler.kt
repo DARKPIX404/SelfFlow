@@ -35,9 +35,12 @@ class AlarmScheduler(private val context: Context) {
         }
     }
 
-    /** Ежедневный повторяющийся будильник (wake/sleep) на локальном времени час/минута. */
+    /** Ежедневный повторяющийся будильник (wake/sleep) на локальном времени час/минута.
+     * setRepeating со времён API 19 неточный и в Doze сдвигается — ставим
+     * точный one-shot, а AlarmReceiver при срабатывании планирует следующий день. */
     fun scheduleRepeating(id: String, hour: Int, minute: Int, title: String, text: String, sound: String) {
         cancel(id)
+        val triggerAt = nextDailyMillis(hour, minute)
         val intent = Intent(context, AlarmReceiver::class.java).apply {
             action = AlarmReceiver.ACTION_ALARM
             data = Uri.parse("selfflow://alarm/$id")
@@ -46,11 +49,19 @@ class AlarmScheduler(private val context: Context) {
             putExtra(AlarmReceiver.EXTRA_TEXT, text)
             putExtra(AlarmReceiver.EXTRA_SOUND, sound)
             putExtra(AlarmReceiver.EXTRA_VIBRATE, true)
+            putExtra(AlarmReceiver.EXTRA_REPEAT_HOUR, hour)
+            putExtra(AlarmReceiver.EXTRA_REPEAT_MINUTE, minute)
         }
         val pending = pendingIntent(id, intent)
-        val triggerAt = nextDailyMillis(hour, minute)
-        @Suppress("DEPRECATION")
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, triggerAt, AlarmManager.INTERVAL_DAY, pending)
+        when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && canScheduleExact() ->
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pending)
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ->
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pending)
+            else ->
+                @Suppress("DEPRECATION")
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAt, pending)
+        }
     }
 
     fun cancel(id: String) {

@@ -35,7 +35,7 @@ class BootReceiver : BroadcastReceiver() {
                     minute = item.getInt("minute"),
                     title = item.optString("title", "SelfFlow"),
                     text = item.optString("text", ""),
-                    sound = item.optString("sound", OverlayActivity.SOUND_ALARM_STANDARD),
+                    sound = item.optString("sound", OverlayActivity.SOUND_SYSTEM),
                 )
             }
 
@@ -50,7 +50,7 @@ class BootReceiver : BroadcastReceiver() {
                         timeMillis = timeMillis,
                         title = item.optString("title", "SelfFlow"),
                         text = item.optString("text", ""),
-                        sound = item.optString("sound", OverlayActivity.SOUND_ALARM_STANDARD),
+                        sound = item.optString("sound", OverlayActivity.SOUND_SYSTEM),
                         vibrate = item.optBoolean("vibrate", true),
                         snoozeMinutes = item.optInt("snoozeMinutes", AlarmReceiver.DEFAULT_SNOOZE_MINUTES),
                     )
