@@ -36,7 +36,7 @@ export const updateState = $state<{
 })
 
 const MY_RELEASE = Number(import.meta.env.VITE_RELEASE_NUM ?? 0)
-const REPO_API = 'https://api.github.com/repos/DARKPZ404/SelfFlow/releases/latest'
+const REPO_API = 'https://api.github.com/repos/DARKPIX404/SelfFlow/releases/latest'
 
 function parseRelease(json: unknown): UpdateInfo | null {
   const r = json as { tag_name?: string; name?: string; body?: string; assets?: { name: string; browser_download_url: string }[] }
