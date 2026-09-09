@@ -29,7 +29,8 @@
   import { showToast } from '$lib/ui/toast.svelte'
   import { haptic } from '$lib/ui/haptics'
   import { Updater } from '$lib/native/updater'
-  import { updateState, checkForUpdate } from '$lib/update.svelte'
+  import { updateState, checkForUpdate, getLatestApkUrl } from '$lib/update.svelte'
+  import { Capacitor } from '@capacitor/core'
 
   // --- аккаунт ---
   const isGuest = $derived(session.user?.id === GUEST_OWNER)
@@ -159,6 +160,7 @@
 
   // --- обновление ---
   let appVersion = $state('')
+  const isNative = Capacitor.isNativePlatform()
 
   $effect(() => {
     void Updater.getAppInfo().then((info) => {
@@ -170,6 +172,23 @@
   function doCheckUpdate() {
     haptic('light')
     void checkForUpdate(true)
+  }
+
+  // веб-версия: вместо проверки обновлений — прямая установка APK последнего релиза
+  let apkBusy = $state(false)
+  async function doInstallApk() {
+    if (apkBusy) return
+    haptic('light')
+    apkBusy = true
+    try {
+      const url = await getLatestApkUrl()
+      window.open(url, '_blank', 'noopener')
+      showToast({ message: 'APK скачивается — откройте файл, чтобы установить' })
+    } catch (e) {
+      showToast({ message: `Не удалось получить APK: ${e instanceof Error ? e.message : String(e)}` })
+    } finally {
+      apkBusy = false
+    }
   }
 
   // --- бэкап ---
@@ -333,20 +352,26 @@
     </section>
 
     <!-- Обновление -->
-    <h2 class="section-title">Обновление</h2>
+    <h2 class="section-title">Приложение</h2>
     <section class="card row">
       <div class="row-texts">
         <h3>Версия приложения</h3>
         <p>{appVersion || '…'}</p>
       </div>
-      <button
-        type="button"
-        class="pill-btn"
-        onclick={doCheckUpdate}
-        disabled={updateState.checking || updateState.downloading}
-      >
-        {updateState.checking ? 'Проверка…' : 'Проверить обновления'}
-      </button>
+      {#if isNative}
+        <button
+          type="button"
+          class="pill-btn"
+          onclick={doCheckUpdate}
+          disabled={updateState.checking || updateState.downloading}
+        >
+          {updateState.checking ? 'Проверка…' : 'Проверить обновления'}
+        </button>
+      {:else}
+        <button type="button" class="pill-btn accent" onclick={() => void doInstallApk()} disabled={apkBusy}>
+          <Icon name="download" size={16} /> {apkBusy ? 'Получение ссылки…' : 'Установить APK'}
+        </button>
+      {/if}
     </section>
 
     <!-- Данные -->
@@ -486,6 +511,7 @@
   .pill-btn.accent {
     background: var(--accent);
     border-color: var(--accent);
+    color: var(--bg);
   }
   .card.row {
     display: flex;
