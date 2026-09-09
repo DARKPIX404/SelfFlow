@@ -183,7 +183,8 @@
   }
   .content {
     position: relative;
-    z-index: 1;
+    /* z-index НЕ задаём: он создавал stacking context, и открытое меню
+       (position: fixed внутри карточки) оказывалось ПОД соседними строками */
     background: var(--surface);
     transition: transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
     touch-action: pan-y;
