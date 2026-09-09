@@ -133,7 +133,7 @@
     onpointermove={onPointerMove}
     onpointerup={onPointerUp}
     onpointercancel={onPointerUp}
-    style="transform: translateX({x}px)"
+    style={x !== 0 ? `transform: translateX(${x}px)` : undefined}
   >
     {@render children()}
   </div>
