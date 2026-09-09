@@ -123,12 +123,14 @@ export interface RingtoneOption {
   label: string
 }
 
-/** будильник: системный по умолчанию + длительные LoFi-мелодии */
+/** будильник: системный по умолчанию + скачанные мелодии (mp3 в res/raw и public/sounds) */
 export const alarmRingtoneOptions: RingtoneOption[] = [
   { key: 'system', label: 'Системный по умолчанию' },
-  { key: 'lofi_morning', label: 'LoFi: утро' },
-  { key: 'lofi_clouds', label: 'LoFi: облака' },
-  { key: 'lofi_night', label: 'LoFi: вечер' },
+  { key: 'breeze', label: 'Бриз' },
+  { key: 'daydream', label: 'Мечтательность' },
+  { key: 'dewdrops', label: 'Капли росы' },
+  { key: 'fireflies', label: 'Светлячки' },
+  { key: 'sunrise', label: 'Рассвет' },
 ]
 
 /** уведомления распорядка/задач: короткие мягкие звуки */
@@ -144,11 +146,17 @@ const NOTIFICATION_KEYS = new Set(notificationSoundOptions.map((o) => o.key))
 // старые/удалённые пресеты → ближайший подходящий новый, чтобы выбранный звук не молчал
 const LEGACY_ALARM: Record<string, string> = {
   alarm_standard: 'system',
-  digital_beep: 'system',
-  classic_bell: 'system',
-  morning_light: 'lofi_morning',
-  lofi_chime: 'lofi_morning',
-  lofi_pluck: 'lofi_night',
+  digital_beep: 'sunrise',
+  classic_bell: 'breeze',
+  morning_light: 'sunrise',
+  lofi_morning: 'sunrise',
+  lofi_clouds: 'dewdrops',
+  lofi_night: 'fireflies',
+  lofi_chime: 'daydream',
+  lofi_pluck: 'breeze',
+  alarm_beep: 'sunrise',
+  alarm_marimba: 'daydream',
+  alarm_bell: 'breeze',
 }
 const LEGACY_NOTIFICATION: Record<string, string> = {
   morning_light: 'lofi_chime',
@@ -174,111 +182,17 @@ interface Synth {
   fn: (ctx: AudioContext, gain: GainNode) => void
 }
 
+/** мелодии будильника: реальные mp3 (public/sounds), превью обрезается */
+const ALARM_MP3 = new Set(['breeze', 'daydream', 'dewdrops', 'fireflies', 'sunrise'])
+const MP3_PREVIEW_MS = 8000
+let mp3Player: HTMLAudioElement | null = null
+
+function stopMp3Preview(): void {
+  mp3Player?.pause()
+  mp3Player = null
+}
+
 const RINGTONES: Record<string, Synth> = {
-  lofi_morning: {
-    ms: 7000,
-    fn: (ctx, gain) => {
-      const chords = [
-        [220.0, 261.63, 329.63, 392.0],
-        [174.61, 220.0, 261.63, 329.63],
-        [130.81, 196.0, 246.94, 329.63],
-        [196.0, 246.94, 293.66, 392.0],
-      ]
-      const beat = 60 / 66
-      const tone = (f: number, t0: number, dec: number, amp: number) => {
-        for (const [freq, a] of [
-          [f, 0.65],
-          [f + 2.4, 0.18],
-          [f * 2, 0.08],
-        ] as const) {
-          const osc = ctx.createOscillator()
-          osc.type = 'sine'
-          osc.frequency.value = freq
-          const g = ctx.createGain()
-          g.gain.setValueAtTime(0, t0)
-          g.gain.linearRampToValueAtTime(amp * a, t0 + 0.03)
-          g.gain.exponentialRampToValueAtTime(0.001, t0 + 1 / dec)
-          osc.connect(g).connect(gain)
-          osc.start(t0)
-          osc.stop(t0 + 1.2)
-        }
-      }
-      chords.forEach((chord, ci) => {
-        const t0 = ctx.currentTime + ci * beat * 4
-        tone(chord[1], t0, 1.1, 0.5)
-        tone(chord[2], t0 + beat, 1.0, 0.4)
-        tone(chord[3], t0 + beat * 2, 0.9, 0.42)
-        tone(chord[2], t0 + beat * 3, 1.2, 0.35)
-      })
-    },
-  },
-  lofi_clouds: {
-    ms: 7000,
-    fn: (ctx, gain) => {
-      const chords = [
-        [130.81, 164.81, 196.0, 246.94, 293.66],
-        [123.47, 196.0, 246.94, 293.66],
-        [110.0, 164.81, 196.0, 261.63, 329.63],
-        [82.41, 164.81, 196.0, 246.94, 293.66],
-      ]
-      const beat = 60 / 58
-      chords.forEach((chord, ci) => {
-        const t0 = ctx.currentTime + ci * beat * 4
-        for (const [idx, off, amp] of [
-          [2, 0, 0.45],
-          [3, beat * 1.5, 0.38],
-          [4, beat * 2.5, 0.4],
-        ] as const) {
-          for (const [mult, a] of [
-            [1, 0.7],
-            [2, 0.08],
-          ] as const) {
-            const osc = ctx.createOscillator()
-            osc.type = 'sine'
-            osc.frequency.value = chord[idx] * mult
-            const g = ctx.createGain()
-            g.gain.setValueAtTime(0, t0 + off)
-            g.gain.linearRampToValueAtTime(amp * a, t0 + off + 0.03)
-            g.gain.exponentialRampToValueAtTime(0.001, t0 + off + 1.6)
-            osc.connect(g).connect(gain)
-            osc.start(t0 + off)
-            osc.stop(t0 + off + 1.8)
-          }
-        }
-      })
-    },
-  },
-  lofi_night: {
-    ms: 7000,
-    fn: (ctx, gain) => {
-      const chords = [
-        [146.83, 174.61, 220.0, 261.63, 329.63],
-        [98.0, 196.0, 233.08, 293.66, 349.23],
-        [130.81, 164.81, 196.0, 246.94, 293.66],
-        [110.0, 138.59, 220.0, 261.63, 329.63],
-      ]
-      const beat = 60 / 62
-      chords.forEach((chord, ci) => {
-        const t0 = ctx.currentTime + ci * beat * 4
-        for (const [idx, off, amp, dec] of [
-          [1, 0, 0.42, 1.2],
-          [2, beat * 2, 0.36, 1.0],
-          [3, beat * 3, 0.33, 1.2],
-        ] as const) {
-          const osc = ctx.createOscillator()
-          osc.type = 'sine'
-          osc.frequency.value = chord[idx]
-          const g = ctx.createGain()
-          g.gain.setValueAtTime(0, t0 + off)
-          g.gain.linearRampToValueAtTime(amp, t0 + off + 0.03)
-          g.gain.exponentialRampToValueAtTime(0.001, t0 + off + 1 / dec)
-          osc.connect(g).connect(gain)
-          osc.start(t0 + off)
-          osc.stop(t0 + off + 1.4)
-        }
-      })
-    },
-  },
   lofi_chime: {
     ms: 2000,
     fn: (ctx, gain) => {
@@ -327,6 +241,15 @@ const RINGTONES: Record<string, Synth> = {
 export function playRingtone(key: string): void {
   // 'system' — звук устройства, в WebView его не воспроизвести
   if (key === 'system') return
+  stopMp3Preview()
+  if (ALARM_MP3.has(key)) {
+    const audio = new Audio(`sounds/${key}.mp3`)
+    audio.volume = 0.9
+    void audio.play().catch(() => {})
+    mp3Player = audio
+    setTimeout(stopMp3Preview, MP3_PREVIEW_MS)
+    return
+  }
   const synth = RINGTONES[key]
   if (!synth) return
   const ctx = new AudioContext()

@@ -78,7 +78,7 @@
     playRingtone(key)
     setTimeout(() => {
       if (playing === key) playing = null
-    }, 2500)
+    }, 8000)
   }
 
   // --- PIN ---

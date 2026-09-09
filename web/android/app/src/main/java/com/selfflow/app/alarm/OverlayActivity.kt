@@ -32,6 +32,7 @@ import java.util.Locale
 class OverlayActivity : AppCompatActivity() {
 
     private var player: MediaPlayer? = null
+    private var systemRingtone: android.media.Ringtone? = null
     private var vibrator: Vibrator? = null
     private var alarmId: String = "alarm"
     private var title: String = "SelfFlow"
@@ -182,22 +183,47 @@ class OverlayActivity : AppCompatActivity() {
     }
 
     private fun ringtoneRes(sound: String): Int = when (sound) {
-        SOUND_LOFI_MORNING -> com.selfflow.app.R.raw.lofi_morning
-        SOUND_LOFI_CLOUDS -> com.selfflow.app.R.raw.lofi_clouds
-        SOUND_LOFI_NIGHT -> com.selfflow.app.R.raw.lofi_night
+        SOUND_BREEZE -> com.selfflow.app.R.raw.breeze
+        SOUND_DAYDREAM -> com.selfflow.app.R.raw.daydream
+        SOUND_DEWDROPS -> com.selfflow.app.R.raw.dewdrops
+        SOUND_FIREFLIES -> com.selfflow.app.R.raw.fireflies
+        SOUND_SUNRISE -> com.selfflow.app.R.raw.sunrise
         SOUND_LOFI_CHIME -> com.selfflow.app.R.raw.lofi_chime
         SOUND_LOFI_PLUCK -> com.selfflow.app.R.raw.lofi_pluck
-        else -> com.selfflow.app.R.raw.lofi_morning
+        else -> com.selfflow.app.R.raw.sunrise
     }
 
     /** 'system' (или неизвестный ключ) — системный рингтон будильника устройства */
     private fun systemAlarmUri(): Uri? =
-        RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+        RingtoneManager.getActualDefaultRingtoneUri(this, RingtoneManager.TYPE_ALARM)
+            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
             ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
+    /**
+     * Системный звук играем через RingtoneManager (а не MediaPlayer по URI):
+     * это каноничный путь — он сам резолвит дефолт устройства и корректно
+     * обрабатывает случаи, когда файл по дефолтному URI недоступен.
+     * Любой сбой — фолбэк на встроенный сигнал, будильник не молчит.
+     */
+    private fun startSystemRingtone(): Boolean {
+        val uri = systemAlarmUri() ?: return false
+        return try {
+            val ringtone = RingtoneManager.getRingtone(this, uri) ?: return false
+            ringtone.audioAttributes = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_ALARM)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+            ringtone.play()
+            systemRingtone = ringtone
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
 
     private fun startRingtone() {
         stopRingtone()
-        val systemUri = if (sound == SOUND_SYSTEM) systemAlarmUri() else null
+        if (sound == SOUND_SYSTEM && startSystemRingtone()) return
         player = MediaPlayer().apply {
             setAudioAttributes(
                 AudioAttributes.Builder()
@@ -205,8 +231,7 @@ class OverlayActivity : AppCompatActivity() {
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                     .build()
             )
-            if (systemUri != null) setDataSource(this@OverlayActivity, systemUri)
-            else setDataSource(resources.openRawResourceFd(ringtoneRes(sound)))
+            setDataSource(resources.openRawResourceFd(ringtoneRes(sound)))
             isLooping = true
             prepare()
             start()
@@ -214,6 +239,13 @@ class OverlayActivity : AppCompatActivity() {
     }
 
     private fun stopRingtone() {
+        systemRingtone?.let {
+            try {
+                if (it.isPlaying) it.stop()
+            } catch (_: Exception) {
+            }
+        }
+        systemRingtone = null
         player?.let {
             try {
                 if (it.isPlaying) it.stop()
@@ -284,9 +316,11 @@ class OverlayActivity : AppCompatActivity() {
 
     companion object {
         const val SOUND_SYSTEM = "system"
-        const val SOUND_LOFI_MORNING = "lofi_morning"
-        const val SOUND_LOFI_CLOUDS = "lofi_clouds"
-        const val SOUND_LOFI_NIGHT = "lofi_night"
+        const val SOUND_BREEZE = "breeze"
+        const val SOUND_DAYDREAM = "daydream"
+        const val SOUND_DEWDROPS = "dewdrops"
+        const val SOUND_FIREFLIES = "fireflies"
+        const val SOUND_SUNRISE = "sunrise"
         const val SOUND_LOFI_CHIME = "lofi_chime"
         const val SOUND_LOFI_PLUCK = "lofi_pluck"
 
