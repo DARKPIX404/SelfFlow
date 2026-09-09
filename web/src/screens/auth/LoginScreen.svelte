@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { login } from '$lib/auth/session.svelte'
+  import { login, enterGuestMode } from '$lib/auth/session.svelte'
   import { syncAll } from '$lib/sync/sync'
   import AuthLayout from './AuthLayout.svelte'
   import TextField from '$lib/ui/TextField.svelte'
@@ -69,6 +69,10 @@
   <p class="switch">
     Нет аккаунта? <button type="button" class="link" onclick={() => navigate('register')}>Регистрация</button>
   </p>
+  <div class="guest">
+    <button type="button" class="guest-btn" onclick={enterGuestMode}>Продолжить без аккаунта</button>
+    <p class="guest-hint">Данные останутся только на этом устройстве, без синхронизации</p>
+  </div>
 </AuthLayout>
 
 <style>
@@ -85,5 +89,32 @@
     font-weight: 600;
     cursor: pointer;
     padding: 4px;
+  }
+  .guest {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .guest-btn {
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 14px;
+    padding: 12px 18px;
+    min-height: 48px;
+    cursor: pointer;
+    width: 100%;
+  }
+  .guest-btn:active {
+    filter: brightness(1.15);
+  }
+  .guest-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
   }
 </style>

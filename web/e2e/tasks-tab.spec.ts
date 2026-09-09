@@ -19,9 +19,11 @@ async function registerFreshUser(page: Page): Promise<void> {
   if ((await passwordInputs.count()) > 1) await passwordInputs.nth(1).fill(password)
   await page.locator('button[type="submit"]').click()
 
-  const skip = page.locator('text=Пропустить')
+  // после входа может показаться onboarding — ждём появления и пропускаем
   try {
-    await skip.click({ timeout: 3_000 })
+    const skip = page.locator('button.skip')
+    await skip.waitFor({ timeout: 10_000 })
+    await skip.click()
   } catch {
     // onboarding уже пройден
   }

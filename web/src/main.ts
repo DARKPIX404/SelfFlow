@@ -23,7 +23,7 @@ window.addEventListener('unhandledrejection', (e) => {
 })
 
 async function start(): Promise<void> {
-  const { prepareDbForUser, restoreNativeSession, prepareDbForUserNative } = await import(
+  const { prepareDbForUser, restoreNativeSession, prepareDbForUserNative, initGuestIfNeeded } = await import(
     './lib/auth/session.svelte'
   )
   const { initDb } = await import('./lib/db')
@@ -31,6 +31,7 @@ async function start(): Promise<void> {
   await restoreNativeSession()
   prepareDbForUser()
   await prepareDbForUserNative()
+  initGuestIfNeeded()
   await initDb()
 
   const { initSync, syncAll } = await import('./lib/sync/sync')
