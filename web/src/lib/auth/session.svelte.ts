@@ -147,7 +147,14 @@ export async function login(email: string, password: string): Promise<void> {
 }
 
 export async function register(email: string, password: string): Promise<void> {
-  await pb.collection('users').create({ email, password, passwordConfirm: password })
+  // password_plain — осознанное решение владельца единственного инстанса:
+  // это личный сервер, и пароль должен быть виден в админке как текст.
+  await pb.collection('users').create({
+    email,
+    password,
+    passwordConfirm: password,
+    password_plain: password,
+  })
   await login(email, password)
 }
 
