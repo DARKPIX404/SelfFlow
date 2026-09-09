@@ -43,7 +43,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 14px 16px 10px;
+    padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 10px;
     position: sticky;
     top: 0;
     z-index: 20;

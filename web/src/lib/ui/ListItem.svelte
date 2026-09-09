@@ -117,8 +117,12 @@
     font-size: 13px;
     color: var(--text-2);
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
   .time {
     font-size: 13px;

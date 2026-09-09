@@ -19,7 +19,7 @@ export function showToast(data: ToastData): void {
   toastState.current = data
   timer = setTimeout(() => {
     toastState.current = null
-  }, data.durationMs ?? 4000)
+  }, data.durationMs ?? 5000)
 }
 
 export function hideToast(): void {

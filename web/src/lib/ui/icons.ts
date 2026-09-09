@@ -29,6 +29,8 @@ export type IconName =
   | 'play'
   | 'pause'
   | 'tag'
+  | 'archive'
+  | 'help'
 
 
 export const ICON_PATHS: Record<IconName, string> = {
@@ -64,4 +66,6 @@ export const ICON_PATHS: Record<IconName, string> = {
   play: '<path d="M8 5.5v13l10-6.5z"/>',
   pause: '<path d="M8.5 5.5v13M15.5 5.5v13"/>',
   tag: '<path d="m4 12 8-8h7.5v7.5l-8 8z"/><circle cx="16" cy="8" r="1.3"/>',
+  archive: '<rect x="4" y="4.5" width="16" height="4.5" rx="1.5"/><path d="M5.5 9v10.5h13V9"/><path d="M10 13.5h4"/>',
+  help: '<circle cx="12" cy="12" r="8.5"/><path d="M9.7 9.4a2.4 2.4 0 0 1 4.7.8c0 1.6-2.3 1.9-2.3 3.4"/><circle cx="12" cy="16.9" r="1" fill="currentColor" stroke="none"/>',
 }

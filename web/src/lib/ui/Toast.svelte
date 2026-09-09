@@ -25,7 +25,7 @@
     position: fixed;
     left: 0;
     right: 0;
-    bottom: 96px;
+    bottom: calc(96px + env(safe-area-inset-bottom, 0px));
     display: flex;
     justify-content: center;
     z-index: 200;
@@ -46,7 +46,7 @@
     padding: 12px 16px;
     font-size: 14px;
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
-    animation: rise 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    animation: rise 320ms cubic-bezier(0.16, 1, 0.3, 1);
   }
   .action {
     border: none;
@@ -59,8 +59,8 @@
     white-space: nowrap;
   }
   @keyframes rise {
-    from { transform: translateY(16px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from { transform: translateY(20px) scale(0.97); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
   }
   @media (prefers-reduced-motion: reduce) {
     .toast { animation: none; }

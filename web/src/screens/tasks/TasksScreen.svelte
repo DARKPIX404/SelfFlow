@@ -15,11 +15,13 @@
   import DropList from '$lib/ui/DropList.svelte'
   import EmptyState from '$lib/ui/EmptyState.svelte'
   import Fab from '$lib/ui/Fab.svelte'
+  import Icon from '$lib/ui/Icon.svelte'
   import ListItem from '$lib/ui/ListItem.svelte'
   import Menu, { type MenuItem } from '$lib/ui/Menu.svelte'
   import SegmentedControl from '$lib/ui/SegmentedControl.svelte'
   import SwipeableRow from '$lib/ui/SwipeableRow.svelte'
   import TextField from '$lib/ui/TextField.svelte'
+  import { push } from '$lib/nav.svelte'
   import { showToast } from '$lib/ui/toast.svelte'
   import { haptic } from '$lib/ui/haptics'
   import { requestRescheduleReminders } from '$lib/notifications'
@@ -43,7 +45,7 @@
     { label: 'В работу', icon: 'play', value: 'progress' },
     { label: 'К выполнению', icon: 'clock', value: 'todo' },
     { label: 'Изменить срок', icon: 'calendar-clock', value: 'reschedule' },
-    { label: 'Удалить', icon: 'trash', value: 'delete', danger: true },
+    { label: 'В архив', icon: 'archive', value: 'delete', danger: true },
   ]
 
   let filter = $state<Filter>('ALL')
@@ -110,7 +112,7 @@
     tasks.remove(t.id)
     haptic('medium')
     showToast({
-      message: 'Задача удалена',
+      message: 'Задача в архиве',
       actionLabel: 'Отменить',
       onAction: () => {
         getDb().run('UPDATE tasks SET deleted = 0 WHERE id = ?', [t.id])
@@ -210,7 +212,13 @@
 </script>
 
 <div class="screen">
-  <AppBar title="Задачи" large />
+  <AppBar title="Задачи" large>
+    {#snippet actions()}
+      <button type="button" class="icon-btn" aria-label="Архив" onclick={() => push(['archive'])}>
+        <Icon name="archive" size={20} />
+      </button>
+    {/snippet}
+  </AppBar>
   <div class="screen-body">
     <SegmentedControl options={filters} value={filter} onchange={(v) => (filter = v)} />
 
@@ -222,10 +230,12 @@
         <div class="stack">
           {#each section.items as t (t.id)}
             <SwipeableRow
-              right={t.status !== 'DONE'
-                ? { label: 'Выполнить', icon: 'check', onTrigger: () => complete(t) }
-                : undefined}
-              left={{ label: 'Удалить', icon: 'trash', onTrigger: () => requestDelete(t) }}
+              right={t.status === 'DONE'
+                ? { label: 'В архив', icon: 'trash', onTrigger: () => requestDelete(t) }
+                : { label: 'Выполнить', icon: 'check', onTrigger: () => complete(t) }}
+              left={t.status === 'DONE'
+                ? { label: 'В архив', icon: 'trash', onTrigger: () => requestDelete(t) }
+                : { label: 'В работу', icon: 'play', onTrigger: () => setStatus(t, 'IN_PROGRESS') }}
             >
               <div class="task-row">
                 <span class="prio" style="background: {priorityColor(t.priority)}"></span>
@@ -292,9 +302,9 @@
 
 <Dialog
   open={pendingDelete !== null}
-  title="Удалить задачу?"
-  message={pendingDelete ? '«' + pendingDelete.title + '» будет удалена.' : ''}
-  confirmLabel="Удалить"
+  title="В архив?"
+  message={pendingDelete ? '«' + pendingDelete.title + '» будет перенесена в архив.' : ''}
+  confirmLabel="В архив"
   danger
   onconfirm={confirmDelete}
   oncancel={() => (pendingDelete = null)}

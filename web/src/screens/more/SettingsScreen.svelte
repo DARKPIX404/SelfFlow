@@ -13,6 +13,7 @@
     clearPin,
     ringtoneOptions,
     playRingtone,
+    alarmSoundKey,
   } from '$lib/settings.svelte'
   import { rescheduleAlarms, requestRescheduleReminders } from '$lib/notifications'
   import { exportBackup, parseBackup, applyBackup, BackupError } from '$lib/backup'
@@ -46,7 +47,7 @@
   }
 
   // --- звук ---
-  let ringtone = $state(getSetting('alarm_sound') ?? 'morning_light')
+  let ringtone = $state(alarmSoundKey())
   let playing = $state<string | null>(null)
 
   function pickRingtone(key: string) {

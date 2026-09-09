@@ -12,6 +12,7 @@
     { icon: 'flame' as const, title: 'Привычки', sub: 'Ежедневные отметки и серии', seg: 'habits', soon: false },
     { icon: 'target' as const, title: 'Цели', sub: 'Долгосрочные направления', seg: 'goals', soon: false },
     { icon: 'play' as const, title: 'Фокус', sub: 'Таймер фокус-сессий', seg: 'focus', soon: false },
+    { icon: 'help' as const, title: 'Помощь', sub: 'Все функции приложения', seg: 'help', soon: false },
     { icon: 'dots' as const, title: 'Настройки', sub: 'Тема, звуки, безопасность', seg: 'settings', soon: false },
   ]
 

@@ -11,9 +11,11 @@
   import TodayScreen from './screens/today/TodayScreen.svelte'
   import RoutinesScreen from './screens/routines/RoutinesScreen.svelte'
   import TasksScreen from './screens/tasks/TasksScreen.svelte'
+  import ArchiveScreen from './screens/tasks/ArchiveScreen.svelte'
   import NotesScreen from './screens/notes/NotesScreen.svelte'
   import NoteEditorScreen from './screens/notes/NoteEditorScreen.svelte'
   import MoreScreen from './screens/more/MoreScreen.svelte'
+  import HelpScreen from './screens/more/HelpScreen.svelte'
   import StatsScreen from './screens/more/StatsScreen.svelte'
   import AlarmScreen from './screens/more/AlarmScreen.svelte'
   import SettingsScreen from './screens/more/SettingsScreen.svelte'
@@ -31,8 +33,15 @@
   })
 
   let onboardingDone = $state(getSetting('onboarding_completed') === '1')
+  // one-shot: пройденный онбординг не показываем повторно, даже если ключ
+  // временно пропал из настроек (гонка при старте/импорт бэкапа без него)
+  let onboardingSeen = $state(getSetting('onboarding_completed') === '1')
   window.addEventListener('selfflow:mutated', () => {
-    onboardingDone = getSetting('onboarding_completed') === '1'
+    const done = getSetting('onboarding_completed') === '1'
+    if (done || onboardingSeen) {
+      onboardingDone = true
+      onboardingSeen = true
+    }
   })
 
   // PIN-блокировка при старте приложения
@@ -65,7 +74,11 @@
     {:else if route.tab === 'routines'}
       <RoutinesScreen />
     {:else if route.tab === 'tasks'}
-      <TasksScreen />
+      {#if route.stack[0] === 'archive'}
+        <ArchiveScreen />
+      {:else}
+        <TasksScreen />
+      {/if}
     {:else if route.tab === 'notes'}
       {#if route.stack[0] === 'notes' && route.stack[1]}
         <NoteEditorScreen noteId={route.stack[1]} />
@@ -85,6 +98,8 @@
         <GoalsScreen />
       {:else if route.stack[0] === 'focus'}
         <FocusScreen />
+      {:else if route.stack[0] === 'help'}
+        <HelpScreen />
       {:else}
         <MoreScreen />
       {/if}

@@ -171,6 +171,7 @@ export const focusSessions = new Repository<FocusSession>('focus_sessions', [
   'started_at',
   'minutes',
   'task_id',
+  'routine_id',
 ])
 export const settings = new Repository<Setting>('settings', ['key', 'value'])
 export const routineTemplates = new Repository<RoutineTemplate>('routine_templates', [

@@ -65,6 +65,7 @@ export interface FocusSession extends BaseEntity {
   started_at: string
   minutes: number
   task_id: string | null
+  routine_id: string | null
 }
 
 export interface RoutineCompletion extends BaseEntity {

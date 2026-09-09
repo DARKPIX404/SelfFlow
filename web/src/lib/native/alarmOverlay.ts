@@ -12,7 +12,7 @@ export interface ScheduleAlarmOptions {
   timeIso: string
   title: string
   text: string
-  /** ключ рингтона из res/raw: morning_light | digital_beep | classic_bell | notification_soft */
+  /** ключ рингтона из res/raw: alarm_standard | lofi_chime | lofi_pluck | digital_beep | classic_bell */
   sound: string
   vibrate: boolean
   snoozeMinutes: number
