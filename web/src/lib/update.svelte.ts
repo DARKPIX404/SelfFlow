@@ -36,7 +36,8 @@ export const updateState = $state<{
 })
 
 const MY_RELEASE = Number(import.meta.env.VITE_RELEASE_NUM ?? 0)
-const REPO_API = 'https://api.github.com/repos/DARKPIX404/SelfFlow/releases/latest'
+// список, а не /latest: все релизы — prerelease, а /latest отдаёт только full
+const REPO_API = 'https://api.github.com/repos/DARKPIX404/SelfFlow/releases'
 
 function parseRelease(json: unknown): UpdateInfo | null {
   const r = json as { tag_name?: string; name?: string; body?: string; assets?: { name: string; browser_download_url: string }[] }
@@ -54,6 +55,16 @@ function parseRelease(json: unknown): UpdateInfo | null {
   }
 }
 
+/** API отдаёт список релизов (сначала новые) — берём первый с APK */
+function parseLatestRelease(json: unknown): UpdateInfo | null {
+  if (!Array.isArray(json)) return null
+  for (const r of json) {
+    const info = parseRelease(r)
+    if (info) return info
+  }
+  return null
+}
+
 export async function checkForUpdate(manual = false): Promise<void> {
   if (!Capacitor.isNativePlatform()) return
   if (updateState.checking || updateState.downloading) return
@@ -64,7 +75,7 @@ export async function checkForUpdate(manual = false): Promise<void> {
     updateState.currentVersion = app.versionName
     const res = await fetch(REPO_API, { headers: { Accept: 'application/vnd.github+json' } })
     if (!res.ok) throw new Error(`GitHub API: ${res.status}`)
-    const info = parseRelease(await res.json())
+    const info = parseLatestRelease(await res.json())
     if (info && info.version > MY_RELEASE) {
       updateState.available = info
       updateState.dismissed = false
@@ -108,7 +119,7 @@ export function dismissUpdate(): void {
 export async function getLatestApkUrl(): Promise<string> {
   const res = await fetch(REPO_API, { headers: { Accept: 'application/vnd.github+json' } })
   if (!res.ok) throw new Error(`GitHub API: ${res.status}`)
-  const info = parseRelease(await res.json())
+  const info = parseLatestRelease(await res.json())
   if (!info) throw new Error('APK не найден в последнем релизе')
   return info.url
 }
