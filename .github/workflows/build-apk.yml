@@ -88,4 +88,3 @@ jobs:
             "SelfFlow-v${{ github.run_number }}.apk" \
             --title "SelfFlow v${{ github.run_number }}" \
             --notes "Автоматическая debug-сборка SelfFlow 2.0 (Capacitor)" \
-            --prerelease
