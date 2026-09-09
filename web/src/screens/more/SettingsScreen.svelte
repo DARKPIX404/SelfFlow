@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { session, logout } from '$lib/auth/session.svelte'
+  import { session, logout, GUEST_OWNER } from '$lib/auth/session.svelte'
   import { syncStatus } from '$lib/sync/status.svelte'
   import { syncAll } from '$lib/sync/sync'
   import {
@@ -27,6 +27,8 @@
   import { haptic } from '$lib/ui/haptics'
 
   // --- аккаунт ---
+  const isGuest = $derived(session.user?.id === GUEST_OWNER)
+
   function doSync() {
     haptic('light')
     void syncAll()
@@ -200,9 +202,11 @@
       <div class="account-head">
         <span class="avatar"><Icon name="shield" size={20} /></span>
         <div class="account-texts">
-          <h3>{session.user?.email ?? '—'}</h3>
+          <h3>{isGuest ? 'Локальный режим' : (session.user?.email ?? '—')}</h3>
           <p class="sync-line">
-            {#if syncStatus.running}
+            {#if isGuest}
+              Без аккаунта — синхронизация отключена
+            {:else if syncStatus.running}
               Синхронизация…
             {:else if syncStatus.lastError}
               Ошибка синка
@@ -211,17 +215,23 @@
             {/if}
           </p>
         </div>
-        {#if syncStatus.pending > 0}
+        {#if !isGuest && syncStatus.pending > 0}
           <span class="queue-badge" title="Неотправленные изменения">{syncStatus.pending}</span>
         {/if}
       </div>
       <div class="account-actions">
-        <button type="button" class="pill-btn" onclick={doSync} disabled={syncStatus.running}>
-          <Icon name="refresh" size={16} /> Синхронизировать
-        </button>
-        <button type="button" class="pill-btn danger" onclick={doLogout}>
-          <Icon name="logout" size={16} /> Выйти
-        </button>
+        {#if isGuest}
+          <button type="button" class="pill-btn" onclick={doLogout}>
+            <Icon name="logout" size={16} /> Войти в аккаунт
+          </button>
+        {:else}
+          <button type="button" class="pill-btn" onclick={doSync} disabled={syncStatus.running}>
+            <Icon name="refresh" size={16} /> Синхронизировать
+          </button>
+          <button type="button" class="pill-btn danger" onclick={doLogout}>
+            <Icon name="logout" size={16} /> Выйти
+          </button>
+        {/if}
       </div>
     </section>
 
