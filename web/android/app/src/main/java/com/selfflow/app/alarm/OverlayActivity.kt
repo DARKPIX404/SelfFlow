@@ -181,6 +181,71 @@ class OverlayActivity : AppCompatActivity() {
         }
     }
 
+    private fun ringtoneRes(sound: String): Int = when (sound) {
+        SOUND_LOFI_MORNING -> com.selfflow.app.R.raw.lofi_morning
+        SOUND_LOFI_CLOUDS -> com.selfflow.app.R.raw.lofi_clouds
+        SOUND_LOFI_NIGHT -> com.selfflow.app.R.raw.lofi_night
+        SOUND_LOFI_CHIME -> com.selfflow.app.R.raw.lofi_chime
+        SOUND_LOFI_PLUCK -> com.selfflow.app.R.raw.lofi_pluck
+        else -> com.selfflow.app.R.raw.lofi_morning
+    }
+
+    /** 'system' (или неизвестный ключ) — системный рингтон будильника устройства */
+    private fun systemAlarmUri(): Uri? =
+        RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
+    private fun startRingtone() {
+        stopRingtone()
+        val systemUri = if (sound == SOUND_SYSTEM) systemAlarmUri() else null
+        player = MediaPlayer().apply {
+            setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+            )
+            if (systemUri != null) setDataSource(this@OverlayActivity, systemUri)
+            else setDataSource(resources.openRawResourceFd(ringtoneRes(sound)))
+            isLooping = true
+            prepare()
+            start()
+        }
+    }
+
+    private fun stopRingtone() {
+        player?.let {
+            try {
+                if (it.isPlaying) it.stop()
+            } catch (_: Exception) {
+            }
+            it.release()
+        }
+        player = null
+    }
+
+    private fun startVibration() {
+        val v = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            (getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        }
+        vibrator = v
+        val pattern = longArrayOf(0, 600, 250, 600, 250, 900)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            v.vibrate(VibrationEffect.createWaveform(pattern, 0))
+        } else {
+            @Suppress("DEPRECATION")
+            v.vibrate(pattern, 0)
+        }
+    }
+
+    private fun stopVibration() {
+        vibrator?.cancel()
+        vibrator = null
+    }
+
     private fun dismissAlarm() {
         stopService(Intent(this, AlarmService::class.java))
         stopAlarmEffects()
