@@ -3,7 +3,7 @@ import { LocalNotifications, type Channel, type LocalNotificationSchema } from '
 import { getDb } from '../db'
 import { routines, habits, tasks } from '../db/repositories'
 import { session } from '../auth/session.svelte'
-import { getSetting } from '../settings.svelte'
+import { getSetting, alarmSoundKey } from '../settings.svelte'
 import { planAll, type PlannedNotification } from './planner'
 import { AlarmOverlay } from '../native/alarmOverlay'
 
@@ -11,8 +11,8 @@ import { AlarmOverlay } from '../native/alarmOverlay'
  * Планирование нативных уведомлений и будильников.
  *
  * - Рутины/привычки/задачи/digest — @capacitor/local-notifications, каналы
- *   routine_reminders (звук notification_soft) и alarm_channel (morning_light).
- *   Плагин сам восстанавливает их после перезагрузки устройства.
+ *   routine_reminders (короткий LoFi-звук lofi_chime) и alarm_channel
+ *   (alarm_standard). Плагин сам восстанавливает их после перезагрузки устройства.
  * - Wake/sleep-будильники «поверх окон» — кастомный AlarmOverlayPlugin
  *   (AlarmManager setRepeating + foreground-сервис + OverlayActivity);
  *   расписание кэшируется нативно и перепланируется BootReceiver'ом.
@@ -27,7 +27,7 @@ const CHANNELS: Channel[] = [
     name: 'Напоминания распорядка',
     description: 'Рутины, привычки и задачи',
     importance: 5, // IMPORTANCE_HIGH
-    sound: 'notification_soft',
+    sound: 'lofi_chime',
     vibration: true,
     visibility: 1,
   },
@@ -36,7 +36,7 @@ const CHANNELS: Channel[] = [
     name: 'Утренний дайджест',
     description: 'Дайджест дня по времени подъёма',
     importance: 5,
-    sound: 'morning_light',
+    sound: 'alarm_standard',
     vibration: true,
     visibility: 1,
   },
@@ -137,7 +137,7 @@ export async function rescheduleAlarms(): Promise<void> {
   try {
     const data = gatherData()
     if (!data) return
-    const sound = getSetting('alarm_sound') ?? 'morning_light'
+    const sound = alarmSoundKey()
     const repeating = data.settings.alarmEnabled
       ? [
           {

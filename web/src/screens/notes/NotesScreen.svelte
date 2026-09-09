@@ -4,6 +4,7 @@
   import { session } from '$lib/auth/session.svelte'
   import type { Note, NoteTag } from '$lib/types'
   import { fmtDateShort } from '$lib/format'
+  import { stripMarkdown } from '$lib/notes/markdown'
   import AppBar from '$lib/ui/AppBar.svelte'
   import Chip from '$lib/ui/Chip.svelte'
   import EmptyState from '$lib/ui/EmptyState.svelte'
@@ -45,7 +46,7 @@
   }
 
   function preview(n: Note): string {
-    const text = n.content.replace(/\s+/g, ' ').trim()
+    const text = stripMarkdown(n.content).replace(/\s+/g, ' ').trim()
     return text.length > 90 ? text.slice(0, 90) + '…' : text
   }
 

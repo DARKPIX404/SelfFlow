@@ -185,6 +185,18 @@ function migrateV2RoutineCompletions(db: DbDriver): void {
 const migrations: Migration[] = [
   { id: 1, name: 'init', sql: V1_SCHEMA },
   { id: 2, name: 'routine_completions_sync', fn: migrateV2RoutineCompletions },
+  {
+    id: 3,
+    name: 'focus_routine_link',
+    fn: (db) => {
+      // фокус-сессии привязываются к блоку распорядка дня, а не к задаче
+      try {
+        db.run('ALTER TABLE focus_sessions ADD COLUMN routine_id TEXT')
+      } catch {
+        // колонка уже есть (повторный прогон/свежая нативная БД) — ок
+      }
+    },
+  },
 ]
 
 /**
@@ -193,7 +205,7 @@ const migrations: Migration[] = [
  * на свежей нативной БД их эффект эквивалентен применению их SQL-схемы.
  */
 export function schemaStatements(): string[] {
-  return [V1_SCHEMA, V2_ROUTINE_COMPLETIONS_SCHEMA]
+  return [V1_SCHEMA, V2_ROUTINE_COMPLETIONS_SCHEMA, 'ALTER TABLE focus_sessions ADD COLUMN routine_id TEXT']
     .flatMap((script) => script.split(';').map((s) => s.trim()).filter(Boolean))
 }
 

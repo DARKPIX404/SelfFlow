@@ -43,7 +43,7 @@ class AlarmOverlayPlugin : Plugin() {
                 timeMillis = timeMillis,
                 title = call.getString("title") ?: "SelfFlow",
                 text = call.getString("text") ?: "",
-                sound = call.getString("sound") ?: OverlayActivity.SOUND_MORNING_LIGHT,
+                sound = call.getString("sound") ?: OverlayActivity.SOUND_ALARM_STANDARD,
                 vibrate = call.getBoolean("vibrate", true)!!,
                 snoozeMinutes = call.getInt("snoozeMinutes") ?: AlarmReceiver.DEFAULT_SNOOZE_MINUTES,
             )
@@ -73,7 +73,7 @@ class AlarmOverlayPlugin : Plugin() {
                 val minute = item.getInt("minute")
                 val title = item.optString("title", "SelfFlow")
                 val text = item.optString("text", "")
-                val sound = item.optString("sound", OverlayActivity.SOUND_MORNING_LIGHT)
+                val sound = item.optString("sound", OverlayActivity.SOUND_ALARM_STANDARD)
                 scheduler.scheduleRepeating(id, hour, minute, title, text, sound)
                 repeating.put(item)
             }
@@ -88,7 +88,7 @@ class AlarmOverlayPlugin : Plugin() {
                     timeMillis = item.getLong("timeMillis"),
                     title = item.optString("title", "SelfFlow"),
                     text = item.optString("text", ""),
-                    sound = item.optString("sound", OverlayActivity.SOUND_MORNING_LIGHT),
+                    sound = item.optString("sound", OverlayActivity.SOUND_ALARM_STANDARD),
                     vibrate = item.optBoolean("vibrate", true),
                     snoozeMinutes = item.optInt("snoozeMinutes", AlarmReceiver.DEFAULT_SNOOZE_MINUTES),
                 )

@@ -32,6 +32,10 @@
 
   function onPointerDown(e: PointerEvent) {
     if (e.button !== 0 && e.pointerType === 'mouse') return
+    // клик по вложенным кнопкам (кебаб, чекбокс) не должен превращаться в
+    // жест: без этого захват указателя при малейшем смещении пальца ретаргетит
+    // click на строку, и кнопка перестаёт нажиматься на тач-устройствах
+    if ((e.target as HTMLElement).closest('button, a, input, select, textarea, [data-swipe-ignore]')) return
     dragging = true
     axis = null
     captured = false

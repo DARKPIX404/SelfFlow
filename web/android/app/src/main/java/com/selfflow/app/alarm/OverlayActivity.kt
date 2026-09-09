@@ -34,7 +34,7 @@ class OverlayActivity : AppCompatActivity() {
     private var alarmId: String = "alarm"
     private var title: String = "SelfFlow"
     private var text: String = ""
-    private var sound: String = SOUND_MORNING_LIGHT
+    private var sound: String = SOUND_ALARM_STANDARD
     private var snoozeMinutes: Int = AlarmReceiver.DEFAULT_SNOOZE_MINUTES
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,7 +45,7 @@ class OverlayActivity : AppCompatActivity() {
         alarmId = intent.getStringExtra(AlarmReceiver.EXTRA_ID) ?: "alarm"
         title = intent.getStringExtra(AlarmReceiver.EXTRA_TITLE) ?: "SelfFlow"
         text = intent.getStringExtra(AlarmReceiver.EXTRA_TEXT) ?: ""
-        sound = intent.getStringExtra(AlarmReceiver.EXTRA_SOUND) ?: SOUND_MORNING_LIGHT
+        sound = intent.getStringExtra(AlarmReceiver.EXTRA_SOUND) ?: SOUND_ALARM_STANDARD
         snoozeMinutes = intent.getIntExtra(AlarmReceiver.EXTRA_SNOOZE_MINUTES, AlarmReceiver.DEFAULT_SNOOZE_MINUTES)
 
         setContentView(buildContent())
@@ -145,10 +145,12 @@ class OverlayActivity : AppCompatActivity() {
     }
 
     private fun ringtoneRes(sound: String): Int = when (sound) {
+        SOUND_ALARM_STANDARD -> com.selfflow.app.R.raw.alarm_standard
+        SOUND_LOFI_CHIME -> com.selfflow.app.R.raw.lofi_chime
+        SOUND_LOFI_PLUCK -> com.selfflow.app.R.raw.lofi_pluck
         SOUND_DIGITAL_BEEP -> com.selfflow.app.R.raw.digital_beep
         SOUND_CLASSIC_BELL -> com.selfflow.app.R.raw.classic_bell
-        SOUND_NOTIFICATION_SOFT -> com.selfflow.app.R.raw.notification_soft
-        else -> com.selfflow.app.R.raw.morning_light
+        else -> com.selfflow.app.R.raw.alarm_standard
     }
 
     private fun startRingtone() {
@@ -238,10 +240,11 @@ class OverlayActivity : AppCompatActivity() {
     }
 
     companion object {
-        const val SOUND_MORNING_LIGHT = "morning_light"
+        const val SOUND_ALARM_STANDARD = "alarm_standard"
+        const val SOUND_LOFI_CHIME = "lofi_chime"
+        const val SOUND_LOFI_PLUCK = "lofi_pluck"
         const val SOUND_DIGITAL_BEEP = "digital_beep"
         const val SOUND_CLASSIC_BELL = "classic_bell"
-        const val SOUND_NOTIFICATION_SOFT = "notification_soft"
 
         fun intent(
             context: Context,
@@ -255,7 +258,7 @@ class OverlayActivity : AppCompatActivity() {
             putExtra(AlarmReceiver.EXTRA_ID, id)
             putExtra(AlarmReceiver.EXTRA_TITLE, title)
             putExtra(AlarmReceiver.EXTRA_TEXT, text)
-            putExtra(AlarmReceiver.EXTRA_SOUND, sound ?: SOUND_MORNING_LIGHT)
+            putExtra(AlarmReceiver.EXTRA_SOUND, sound ?: SOUND_ALARM_STANDARD)
             putExtra(AlarmReceiver.EXTRA_VIBRATE, vibrate)
             putExtra(AlarmReceiver.EXTRA_SNOOZE_MINUTES, snoozeMinutes)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or

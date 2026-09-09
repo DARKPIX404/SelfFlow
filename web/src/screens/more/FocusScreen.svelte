@@ -1,6 +1,6 @@
 <script lang="ts">
   import { session } from '$lib/auth/session.svelte'
-  import { focusSessions, tasks } from '$lib/db/repositories'
+  import { focusSessions, routines } from '$lib/db/repositories'
   import { pop } from '$lib/nav.svelte'
   import Chip from '$lib/ui/Chip.svelte'
   import DropList from '$lib/ui/DropList.svelte'
@@ -14,7 +14,7 @@
 
   let phase = $state<Phase>('setup')
   let plannedMin = $state(25)
-  let taskId = $state<string | null>(null)
+  let routineId = $state<string | null>(null)
 
   let startedAt = 0
   let pausedAccum = 0
@@ -23,12 +23,11 @@
   let timer: ReturnType<typeof setInterval> | null = null
   let baseTitle = document.title
 
-  const taskOptions = $derived(
+  const routineOptions = $derived(
     session.user
-      ? tasks
+      ? routines
           .list(session.user.id)
-          .filter((t) => t.status !== 'DONE')
-          .map((t) => ({ value: t.id, label: t.title }))
+          .map((r) => ({ value: r.id, label: r.title }))
       : [],
   )
 
@@ -86,7 +85,8 @@
     focusSessions.create(user.id, {
       started_at: new Date(startedAt).toISOString().replace('T', ' '),
       minutes,
-      task_id: taskId,
+      task_id: null,
+      routine_id: routineId,
     })
     window.dispatchEvent(new CustomEvent('selfflow:mutated'))
   }
@@ -202,8 +202,8 @@
           {/each}
         </div>
         <div class="setup-task">
-          <span class="setup-label">Задача (необязательно)</span>
-          <DropList options={taskOptions} value={taskId} onchange={(v) => (taskId = v)} placeholder="Без привязки" />
+          <span class="setup-label">Рутина (необязательно)</span>
+          <DropList options={routineOptions} value={routineId} onchange={(v) => (routineId = v)} placeholder="Без привязки" />
         </div>
         <button type="button" class="start-btn" onclick={start}>
           <Icon name="play" size={20} /> Начать фокус
@@ -216,8 +216,8 @@
           <span class="timer-time">{mmss}</span>
         </div>
         <span class="timer-state">{phase === 'paused' ? 'Пауза' : 'Фокус'} · {plannedMin} мин</span>
-        {#if taskId}
-          <span class="timer-task">{taskOptions.find((o) => o.value === taskId)?.label ?? ''}</span>
+        {#if routineId}
+          <span class="timer-task">{routineOptions.find((o) => o.value === routineId)?.label ?? ''}</span>
         {/if}
         <div class="timer-controls">
           {#if phase === 'running'}
@@ -261,7 +261,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 8px;
+    padding: calc(12px + env(safe-area-inset-top, 0px)) 8px 12px;
   }
   .focus-title {
     font-size: 17px;

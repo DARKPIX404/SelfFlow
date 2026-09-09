@@ -74,7 +74,7 @@ const FOREIGN_KEYS: Partial<Record<BackupTable, Record<string, BackupTable>>> = 
   tasks: { routine_id: 'routines', goal_id: 'goals' },
   note_tags: { note_id: 'notes' },
   habit_logs: { habit_id: 'habits' },
-  focus_sessions: { task_id: 'tasks' },
+  focus_sessions: { task_id: 'tasks', routine_id: 'routines' },
 }
 
 const ENUM_FIELDS: Record<string, Set<string>> = {
@@ -105,6 +105,16 @@ export interface ImportStats {
 
 export function applyBackup(db: DbDriver, file: BackupFile, owner: string): ImportStats {
   const now = nowIso()
+
+  // настройки (тема, onboarding, PIN, звуки) — локальные предпочтения, а не
+  // данные: импорт бэкапа не должен их затирать (иначе тема сбрасывается
+  // и повторно показывается экран приветствия)
+  const preservedSettings = db
+    .query<{ key: string; value: string | null }>(
+      'SELECT key, value FROM settings WHERE owner = ? AND deleted = 0',
+      [owner],
+    )
+    .map((r) => ({ key: r.key, value: r.value }))
 
   // 1) маппинг старый id → новый id (все таблицы в одном пространстве имён)
   const idMap = new Map<string, string>()
@@ -182,6 +192,18 @@ export function applyBackup(db: DbDriver, file: BackupFile, owner: string): Impo
       }
     }
   })
+  // возвращаем локальные настройки на место (после транзакции — отдельными записями)
+  for (const s of preservedSettings) {
+    const existing = db.queryOne<{ id: string }>(
+      'SELECT id FROM settings WHERE owner = ? AND key = ? AND deleted = 0',
+      [owner, s.key],
+    )
+    if (existing) {
+      repositories.settings.update(existing.id, { key: s.key, value: s.value } as never)
+    } else {
+      repositories.settings.create(owner, { key: s.key, value: s.value } as never)
+    }
+  }
   if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('selfflow:mutated'))
   return { imported, removed }
 }
