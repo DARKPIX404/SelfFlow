@@ -4,12 +4,28 @@ apply plugin: 'org.jetbrains.kotlin.android'
 android {
     namespace = "com.selfflow.app"
     compileSdk = rootProject.ext.compileSdkVersion
+
+    // Единый debug-ключ в репозитории: локальные и CI-сборки подписаны
+    // одинаково, APK обновляется поверх установленного без конфликта
+    // подписей (эфемерный ключ раннера каждый раз новый → был конфликт).
+    // Это debug-сертификат — пароль в открытом виде допустим.
+    signingConfigs {
+        debug {
+            storeFile file('keystore/selfflow-debug.keystore')
+            storePassword System.getenv('SELFFLOW_DEBUG_STORE_PASSWORD') ?: 'selfflow-debug'
+            keyAlias 'selfflow-debug'
+            keyPassword System.getenv('SELFFLOW_DEBUG_KEY_PASSWORD') ?: 'selfflow-debug'
+        }
+    }
+
     defaultConfig {
         applicationId "com.selfflow.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // монотонный versionCode — количество коммитов; в CI нужен
+        // checkout с fetch-depth: 0 (см. build-apk.yml)
+        versionCode gitCommitCount()
+        versionName "1.0.${gitCommitCount()}"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -18,10 +34,28 @@ android {
         }
     }
     buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+    }
+}
+
+/** количество коммитов в HEAD — монотонный versionCode для поверх-установки */
+def gitCommitCount() {
+    try {
+        def out = new ByteArrayOutputStream()
+        exec {
+            commandLine 'git', 'rev-list', '--count', 'HEAD'
+            standardOutput = out
+        }
+        return out.toString().trim().toInteger()
+    } catch (Exception e) {
+        logger.info("git rev-list не удался, versionCode = 1: ${e.message}")
+        return 1
     }
 }
 

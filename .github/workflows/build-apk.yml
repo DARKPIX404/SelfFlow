@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # полная история — versionCode из git rev-list
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
