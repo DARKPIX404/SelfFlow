@@ -6,6 +6,8 @@ import android.content.Intent
 import android.graphics.Typeface
 import android.media.AudioAttributes
 import android.media.MediaPlayer
+import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
@@ -34,7 +36,7 @@ class OverlayActivity : AppCompatActivity() {
     private var alarmId: String = "alarm"
     private var title: String = "SelfFlow"
     private var text: String = ""
-    private var sound: String = SOUND_ALARM_STANDARD
+    private var sound: String = SOUND_SYSTEM
     private var snoozeMinutes: Int = AlarmReceiver.DEFAULT_SNOOZE_MINUTES
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,7 +47,7 @@ class OverlayActivity : AppCompatActivity() {
         alarmId = intent.getStringExtra(AlarmReceiver.EXTRA_ID) ?: "alarm"
         title = intent.getStringExtra(AlarmReceiver.EXTRA_TITLE) ?: "SelfFlow"
         text = intent.getStringExtra(AlarmReceiver.EXTRA_TEXT) ?: ""
-        sound = intent.getStringExtra(AlarmReceiver.EXTRA_SOUND) ?: SOUND_ALARM_STANDARD
+        sound = intent.getStringExtra(AlarmReceiver.EXTRA_SOUND) ?: SOUND_SYSTEM
         snoozeMinutes = intent.getIntExtra(AlarmReceiver.EXTRA_SNOOZE_MINUTES, AlarmReceiver.DEFAULT_SNOOZE_MINUTES)
 
         setContentView(buildContent())
@@ -85,122 +87,98 @@ class OverlayActivity : AppCompatActivity() {
         val dp = resources.displayMetrics.density
         fun Int.dp() = (this * dp).toInt()
 
+        val cream = 0xFFF0E6CC.toInt()
+
+        val labelView = TextView(this).apply {
+            text = "Б У Д И Л Ь Н И К"
+            setTextColor(0x80F0E6CC.toInt())
+            textSize = 12f
+            gravity = Gravity.CENTER
+            letterSpacing = 0.2f
+        }
+
         val timeText = TextView(this).apply {
             text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-            setTextColor(0xFFF0E6CC.toInt())
-            textSize = 88f
+            setTextColor(cream)
+            textSize = 84f
             gravity = Gravity.CENTER
             typeface = Typeface.DEFAULT_BOLD
-            setPadding(0, 0, 0, 8.dp())
+            setPadding(0, 10.dp(), 0, 6.dp())
         }
 
         val titleView = TextView(this).apply {
             text = title
-            setTextColor(0xFFF0E6CC.toInt())
-            textSize = 26f
+            setTextColor(cream)
+            textSize = 24f
             gravity = Gravity.CENTER
+            typeface = Typeface.DEFAULT_BOLD
         }
 
         val textView = TextView(this).apply {
             text = text
             setTextColor(0x99F0E6CC.toInt())
-            textSize = 16f
+            textSize = 15f
             gravity = Gravity.CENTER
-            setPadding(0, 8.dp(), 0, 0)
+            setPadding(0, 6.dp(), 0, 0)
+        }
+
+        fun roundButton(bgColor: Int, strokeColor: Int?, radius: Int): android.graphics.drawable.Drawable {
+            val d = android.graphics.drawable.GradientDrawable().apply {
+                setColor(bgColor)
+                cornerRadius = radius.dp().toFloat()
+                if (strokeColor != null) setStroke(2.dp(), strokeColor)
+            }
+            return d
         }
 
         val dismissBtn = Button(this).apply {
-            text = "Выключить"
-            setTextColor(0xFFF0E6CC.toInt())
-            textSize = 18f
-            setBackgroundColor(0xFFC9403B.toInt())
+            text = "ВЫКЛЮЧИТЬ"
+            setTextColor(cream)
+            textSize = 16f
+            typeface = Typeface.DEFAULT_BOLD
+            background = roundButton(0xFFC9403B.toInt(), null, 18)
             setOnClickListener { dismissAlarm() }
         }
 
         val snoozeBtn = Button(this).apply {
             text = "Отложить (+$snoozeMinutes мин)"
-            setTextColor(0xFFF0E6CC.toInt())
-            textSize = 16f
-            setBackgroundColor(0x33F0E6CC.toInt())
+            setTextColor(cream)
+            textSize = 15f
+            background = roundButton(0x14F0E6CC.toInt(), 0x66F0E6CC.toInt(), 18)
             setOnClickListener { snoozeAlarm() }
         }
 
         val buttons = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
-            addView(dismissBtn, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 56.dp()).apply { topMargin = 24.dp() })
-            addView(snoozeBtn, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 48.dp()).apply { topMargin = 12.dp() })
+            addView(dismissBtn, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 56.dp()).apply { topMargin = 26.dp() })
+            addView(snoozeBtn, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 50.dp()).apply { topMargin = 12.dp() })
         }
 
-        return LinearLayout(this).apply {
+        val card = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            setBackgroundColor(0xFF151311.toInt())
-            setPadding(32.dp(), 32.dp(), 32.dp(), 32.dp())
+            gravity = Gravity.CENTER_HORIZONTAL
+            background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(0xFF242019.toInt())
+                cornerRadius = 30.dp().toFloat()
+                setStroke(1.dp(), 0x26F0E6CC.toInt())
+            }
+            setPadding(26.dp(), 30.dp(), 26.dp(), 26.dp())
+            addView(labelView, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
             addView(timeText, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
             addView(titleView, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
             addView(textView, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
             addView(buttons, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
         }
-    }
 
-    private fun ringtoneRes(sound: String): Int = when (sound) {
-        SOUND_ALARM_STANDARD -> com.selfflow.app.R.raw.alarm_standard
-        SOUND_LOFI_CHIME -> com.selfflow.app.R.raw.lofi_chime
-        SOUND_LOFI_PLUCK -> com.selfflow.app.R.raw.lofi_pluck
-        SOUND_DIGITAL_BEEP -> com.selfflow.app.R.raw.digital_beep
-        SOUND_CLASSIC_BELL -> com.selfflow.app.R.raw.classic_bell
-        else -> com.selfflow.app.R.raw.alarm_standard
-    }
-
-    private fun startRingtone() {
-        stopRingtone()
-        val res = ringtoneRes(sound)
-        player = MediaPlayer().apply {
-            setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_ALARM)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build()
-            )
-            setDataSource(resources.openRawResourceFd(res))
-            isLooping = true
-            prepare()
-            start()
+        // корень: тёмный полупрозрачный фон + центрированная карточка
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setBackgroundColor(0xE6100E0C.toInt())
+            setPadding(24.dp(), 24.dp(), 24.dp(), 24.dp())
+            addView(card, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
         }
-    }
-
-    private fun stopRingtone() {
-        player?.let {
-            try {
-                if (it.isPlaying) it.stop()
-            } catch (_: Exception) {
-            }
-            it.release()
-        }
-        player = null
-    }
-
-    private fun startVibration() {
-        val v = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            (getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
-        } else {
-            @Suppress("DEPRECATION")
-            getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        }
-        vibrator = v
-        val pattern = longArrayOf(0, 600, 250, 600, 250, 900)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            v.vibrate(VibrationEffect.createWaveform(pattern, 0))
-        } else {
-            @Suppress("DEPRECATION")
-            v.vibrate(pattern, 0)
-        }
-    }
-
-    private fun stopVibration() {
-        vibrator?.cancel()
-        vibrator = null
     }
 
     private fun dismissAlarm() {
@@ -240,11 +218,12 @@ class OverlayActivity : AppCompatActivity() {
     }
 
     companion object {
-        const val SOUND_ALARM_STANDARD = "alarm_standard"
+        const val SOUND_SYSTEM = "system"
+        const val SOUND_LOFI_MORNING = "lofi_morning"
+        const val SOUND_LOFI_CLOUDS = "lofi_clouds"
+        const val SOUND_LOFI_NIGHT = "lofi_night"
         const val SOUND_LOFI_CHIME = "lofi_chime"
         const val SOUND_LOFI_PLUCK = "lofi_pluck"
-        const val SOUND_DIGITAL_BEEP = "digital_beep"
-        const val SOUND_CLASSIC_BELL = "classic_bell"
 
         fun intent(
             context: Context,
@@ -258,7 +237,7 @@ class OverlayActivity : AppCompatActivity() {
             putExtra(AlarmReceiver.EXTRA_ID, id)
             putExtra(AlarmReceiver.EXTRA_TITLE, title)
             putExtra(AlarmReceiver.EXTRA_TEXT, text)
-            putExtra(AlarmReceiver.EXTRA_SOUND, sound ?: SOUND_ALARM_STANDARD)
+            putExtra(AlarmReceiver.EXTRA_SOUND, sound ?: SOUND_SYSTEM)
             putExtra(AlarmReceiver.EXTRA_VIBRATE, vibrate)
             putExtra(AlarmReceiver.EXTRA_SNOOZE_MINUTES, snoozeMinutes)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or

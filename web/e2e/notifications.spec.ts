@@ -91,7 +91,7 @@ test('создание рутины перепланирует локальны�
   expect(first.notifications.length).toBeGreaterThan(0)
   const routineNotes = first.notifications.filter((n) => n.body === 'E2E зарядка')
   expect(routineNotes.length).toBeGreaterThan(0)
-  expect(routineNotes[0].channelId).toBe('routine_reminders')
+  expect(routineNotes[0].channelId).toMatch(/^routine_reminders__/)
   expect(new Date(routineNotes[0].schedule.at).getTime()).toBeGreaterThan(Date.now())
 
   // каналы созданы (routine_reminders + alarm_channel)
@@ -100,6 +100,6 @@ test('создание рутины перепланирует локальны�
     return mock.calls.channels
   })
   const channelIds = (channels as { id: string }[]).map((c) => c.id)
-  expect(channelIds).toContain('routine_reminders')
-  expect(channelIds).toContain('alarm_channel')
+  expect(channelIds.some((id) => id.startsWith('routine_reminders__'))).toBe(true)
+  expect(channelIds.some((id) => id.startsWith('alarm_channel__'))).toBe(true)
 })

@@ -116,141 +116,223 @@ export const pinLock = $state({ locked: false })
 
 // --- Прочие ключи (будильник, звук) — читаются напрямую через getSetting ---
 
-// --- Звук будильника (ключи совпадают с res/raw нативного проекта) ---
+// --- Звуки (ключи совпадают с res/raw нативного проекта; 'system' = системный по умолчанию) ---
 
 export interface RingtoneOption {
   key: string
   label: string
 }
 
-export const ringtoneOptions: RingtoneOption[] = [
-  { key: 'alarm_standard', label: 'Стандартный будильник' },
-  { key: 'lofi_chime', label: 'LoFi: колокольчик' },
-  { key: 'lofi_pluck', label: 'LoFi: щелчок' },
-  { key: 'digital_beep', label: 'Цифровой сигнал' },
-  { key: 'classic_bell', label: 'Классический звонок' },
+/** будильник: системный по умолчанию + длительные LoFi-мелодии */
+export const alarmRingtoneOptions: RingtoneOption[] = [
+  { key: 'system', label: 'Системный по умолчанию' },
+  { key: 'lofi_morning', label: 'LoFi: утро' },
+  { key: 'lofi_clouds', label: 'LoFi: облака' },
+  { key: 'lofi_night', label: 'LoFi: вечер' },
 ]
 
-const RINGTONE_KEYS = new Set(ringtoneOptions.map((o) => o.key))
-// ключи старых пресетов → ближайший из новых (установленные звуки не молчат)
-const LEGACY_RINGTONES: Record<string, string> = {
+/** уведомления распорядка/задач: короткие мягкие звуки */
+export const notificationSoundOptions: RingtoneOption[] = [
+  { key: 'system', label: 'Системный по умолчанию' },
+  { key: 'lofi_chime', label: 'LoFi: колокольчик' },
+  { key: 'lofi_pluck', label: 'LoFi: щелчок' },
+]
+
+const ALARM_KEYS = new Set(alarmRingtoneOptions.map((o) => o.key))
+const NOTIFICATION_KEYS = new Set(notificationSoundOptions.map((o) => o.key))
+
+// старые/удалённые пресеты → ближайший подходящий новый, чтобы выбранный звук не молчал
+const LEGACY_ALARM: Record<string, string> = {
+  alarm_standard: 'system',
+  digital_beep: 'system',
+  classic_bell: 'system',
+  morning_light: 'lofi_morning',
+  lofi_chime: 'lofi_morning',
+  lofi_pluck: 'lofi_night',
+}
+const LEGACY_NOTIFICATION: Record<string, string> = {
   morning_light: 'lofi_chime',
-  notification_soft: 'lofi_pluck',
+  notification_soft: 'lofi_chime',
+  alarm_standard: 'lofi_pluck',
 }
 
 export function alarmSoundKey(): string {
-  const key = getSetting('alarm_sound') ?? 'alarm_standard'
-  if (RINGTONE_KEYS.has(key)) return key
-  return LEGACY_RINGTONES[key] ?? 'alarm_standard'
+  const key = getSetting('alarm_sound') ?? 'system'
+  if (ALARM_KEYS.has(key)) return key
+  return LEGACY_ALARM[key] ?? 'system'
 }
 
-const RINGTONES: Record<string, (ctx: AudioContext, gain: GainNode) => void> = {
-  alarm_standard: (ctx, gain) => {
-    // серия коротких настойчивых бипов, как у классического цифрового будильника
-    for (let i = 0; i < 6; i++) {
-      const t0 = ctx.currentTime + i * 0.4
-      for (const [freq, amp] of [
-        [1046.5, 0.5],
-        [2093, 0.12],
-        [523.25, 0.14],
+export function notificationSoundKey(): string {
+  const key = getSetting('notification_sound') ?? 'lofi_chime'
+  if (NOTIFICATION_KEYS.has(key)) return key
+  return LEGACY_NOTIFICATION[key] ?? 'lofi_chime'
+}
+
+interface Synth {
+  /** длительность превью, мс — для закрытия AudioContext */
+  ms: number
+  fn: (ctx: AudioContext, gain: GainNode) => void
+}
+
+const RINGTONES: Record<string, Synth> = {
+  lofi_morning: {
+    ms: 7000,
+    fn: (ctx, gain) => {
+      const chords = [
+        [220.0, 261.63, 329.63, 392.0],
+        [174.61, 220.0, 261.63, 329.63],
+        [130.81, 196.0, 246.94, 329.63],
+        [196.0, 246.94, 293.66, 392.0],
+      ]
+      const beat = 60 / 66
+      const tone = (f: number, t0: number, dec: number, amp: number) => {
+        for (const [freq, a] of [
+          [f, 0.65],
+          [f + 2.4, 0.18],
+          [f * 2, 0.08],
+        ] as const) {
+          const osc = ctx.createOscillator()
+          osc.type = 'sine'
+          osc.frequency.value = freq
+          const g = ctx.createGain()
+          g.gain.setValueAtTime(0, t0)
+          g.gain.linearRampToValueAtTime(amp * a, t0 + 0.03)
+          g.gain.exponentialRampToValueAtTime(0.001, t0 + 1 / dec)
+          osc.connect(g).connect(gain)
+          osc.start(t0)
+          osc.stop(t0 + 1.2)
+        }
+      }
+      chords.forEach((chord, ci) => {
+        const t0 = ctx.currentTime + ci * beat * 4
+        tone(chord[1], t0, 1.1, 0.5)
+        tone(chord[2], t0 + beat, 1.0, 0.4)
+        tone(chord[3], t0 + beat * 2, 0.9, 0.42)
+        tone(chord[2], t0 + beat * 3, 1.2, 0.35)
+      })
+    },
+  },
+  lofi_clouds: {
+    ms: 7000,
+    fn: (ctx, gain) => {
+      const chords = [
+        [130.81, 164.81, 196.0, 246.94, 293.66],
+        [123.47, 196.0, 246.94, 293.66],
+        [110.0, 164.81, 196.0, 261.63, 329.63],
+        [82.41, 164.81, 196.0, 246.94, 293.66],
+      ]
+      const beat = 60 / 58
+      chords.forEach((chord, ci) => {
+        const t0 = ctx.currentTime + ci * beat * 4
+        for (const [idx, off, amp] of [
+          [2, 0, 0.45],
+          [3, beat * 1.5, 0.38],
+          [4, beat * 2.5, 0.4],
+        ] as const) {
+          for (const [mult, a] of [
+            [1, 0.7],
+            [2, 0.08],
+          ] as const) {
+            const osc = ctx.createOscillator()
+            osc.type = 'sine'
+            osc.frequency.value = chord[idx] * mult
+            const g = ctx.createGain()
+            g.gain.setValueAtTime(0, t0 + off)
+            g.gain.linearRampToValueAtTime(amp * a, t0 + off + 0.03)
+            g.gain.exponentialRampToValueAtTime(0.001, t0 + off + 1.6)
+            osc.connect(g).connect(gain)
+            osc.start(t0 + off)
+            osc.stop(t0 + off + 1.8)
+          }
+        }
+      })
+    },
+  },
+  lofi_night: {
+    ms: 7000,
+    fn: (ctx, gain) => {
+      const chords = [
+        [146.83, 174.61, 220.0, 261.63, 329.63],
+        [98.0, 196.0, 233.08, 293.66, 349.23],
+        [130.81, 164.81, 196.0, 246.94, 293.66],
+        [110.0, 138.59, 220.0, 261.63, 329.63],
+      ]
+      const beat = 60 / 62
+      chords.forEach((chord, ci) => {
+        const t0 = ctx.currentTime + ci * beat * 4
+        for (const [idx, off, amp, dec] of [
+          [1, 0, 0.42, 1.2],
+          [2, beat * 2, 0.36, 1.0],
+          [3, beat * 3, 0.33, 1.2],
+        ] as const) {
+          const osc = ctx.createOscillator()
+          osc.type = 'sine'
+          osc.frequency.value = chord[idx]
+          const g = ctx.createGain()
+          g.gain.setValueAtTime(0, t0 + off)
+          g.gain.linearRampToValueAtTime(amp, t0 + off + 0.03)
+          g.gain.exponentialRampToValueAtTime(0.001, t0 + off + 1 / dec)
+          osc.connect(g).connect(gain)
+          osc.start(t0 + off)
+          osc.stop(t0 + off + 1.4)
+        }
+      })
+    },
+  },
+  lofi_chime: {
+    ms: 2000,
+    fn: (ctx, gain) => {
+      const note = (freq: number, t0: number, dec: number, amp: number) => {
+        for (const detune of [0, 2.7]) {
+          const osc = ctx.createOscillator()
+          osc.type = 'sine'
+          osc.frequency.value = freq + detune
+          const g = ctx.createGain()
+          g.gain.setValueAtTime(0, t0)
+          g.gain.linearRampToValueAtTime(detune === 0 ? amp : amp * 0.3, t0 + 0.015)
+          g.gain.exponentialRampToValueAtTime(0.001, t0 + 1 / dec)
+          osc.connect(g).connect(gain)
+          osc.start(t0)
+          osc.stop(t0 + 1.2)
+        }
+      }
+      note(659.25, ctx.currentTime, 3.2, 0.45)
+      note(493.88, ctx.currentTime + 0.45, 2.8, 0.4)
+    },
+  },
+  lofi_pluck: {
+    ms: 2000,
+    fn: (ctx, gain) => {
+      for (const [mult, amp] of [
+        [1, 0.5],
+        [2.01, 0.09],
       ] as const) {
         const osc = ctx.createOscillator()
         osc.type = 'sine'
-        osc.frequency.value = freq
+        const t0 = ctx.currentTime
+        osc.frequency.setValueAtTime(396 * mult, t0)
+        osc.frequency.linearRampToValueAtTime(382 * mult, t0 + 0.2)
         const g = ctx.createGain()
         g.gain.setValueAtTime(0, t0)
-        g.gain.linearRampToValueAtTime(amp, t0 + 0.008)
-        g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.22)
+        g.gain.linearRampToValueAtTime(amp, t0 + 0.006)
+        g.gain.exponentialRampToValueAtTime(0.001, t0 + 1.05)
         osc.connect(g).connect(gain)
         osc.start(t0)
-        osc.stop(t0 + 0.24)
+        osc.stop(t0 + 1.1)
       }
-    }
-  },
-  lofi_chime: (ctx, gain) => {
-    const note = (freq: number, t0: number, dec: number, amp: number) => {
-      for (const detune of [0, 2.7]) {
-        const osc = ctx.createOscillator()
-        osc.type = 'sine'
-        osc.frequency.value = freq + detune
-        const g = ctx.createGain()
-        g.gain.setValueAtTime(0, t0)
-        g.gain.linearRampToValueAtTime(detune === 0 ? amp : amp * 0.3, t0 + 0.015)
-        g.gain.exponentialRampToValueAtTime(0.001, t0 + 1 / dec)
-        osc.connect(g).connect(gain)
-        osc.start(t0)
-        osc.stop(t0 + 1.2)
-      }
-      const harm = ctx.createOscillator()
-      harm.type = 'sine'
-      harm.frequency.value = freq * 2
-      const hg = ctx.createGain()
-      hg.gain.setValueAtTime(0, t0)
-      hg.gain.linearRampToValueAtTime(amp * 0.15, t0 + 0.01)
-      hg.gain.exponentialRampToValueAtTime(0.001, t0 + 0.5)
-      harm.connect(hg).connect(gain)
-      harm.start(t0)
-      harm.stop(t0 + 0.6)
-    }
-    note(659.25, ctx.currentTime, 3.2, 0.45)
-    note(493.88, ctx.currentTime + 0.45, 2.8, 0.4)
-  },
-  lofi_pluck: (ctx, gain) => {
-    for (const [mult, amp] of [
-      [1, 0.5],
-      [2.01, 0.09],
-    ] as const) {
-      const osc = ctx.createOscillator()
-      osc.type = 'sine'
-      const t0 = ctx.currentTime
-      osc.frequency.setValueAtTime(396 * mult, t0)
-      osc.frequency.linearRampToValueAtTime(382 * mult, t0 + 0.2)
-      const g = ctx.createGain()
-      g.gain.setValueAtTime(0, t0)
-      g.gain.linearRampToValueAtTime(amp, t0 + 0.006)
-      g.gain.exponentialRampToValueAtTime(0.001, t0 + 1.05)
-      osc.connect(g).connect(gain)
-      osc.start(t0)
-      osc.stop(t0 + 1.1)
-    }
-  },
-  digital_beep: (ctx, gain) => {
-    for (let i = 0; i < 2; i++) {
-      const osc = ctx.createOscillator()
-      osc.type = 'square'
-      osc.frequency.value = 440
-      const g = ctx.createGain()
-      g.gain.setValueAtTime(0, ctx.currentTime + i * 0.5)
-      g.gain.linearRampToValueAtTime(0.25, ctx.currentTime + i * 0.5 + 0.02)
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.5 + 0.45)
-      osc.connect(g).connect(gain)
-      osc.start(ctx.currentTime + i * 0.5)
-      osc.stop(ctx.currentTime + i * 0.5 + 0.48)
-    }
-  },
-  classic_bell: (ctx, gain) => {
-    for (let i = 0; i < 3; i++) {
-      const osc = ctx.createOscillator()
-      osc.type = 'triangle'
-      osc.frequency.value = 880
-      const g = ctx.createGain()
-      g.gain.setValueAtTime(0, ctx.currentTime + i * 0.4)
-      g.gain.linearRampToValueAtTime(0.4, ctx.currentTime + i * 0.4 + 0.02)
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.4 + 0.38)
-      osc.connect(g).connect(gain)
-      osc.start(ctx.currentTime + i * 0.4)
-      osc.stop(ctx.currentTime + i * 0.4 + 0.4)
-    }
+    },
   },
 }
 
 export function playRingtone(key: string): void {
-  const fn = RINGTONES[key]
-  if (!fn) return
+  // 'system' — звук устройства, в WebView его не воспроизвести
+  if (key === 'system') return
+  const synth = RINGTONES[key]
+  if (!synth) return
   const ctx = new AudioContext()
   const gain = ctx.createGain()
   gain.gain.value = 0.6
   gain.connect(ctx.destination)
-  fn(ctx, gain)
-  setTimeout(() => void ctx.close(), 3500)
+  synth.fn(ctx, gain)
+  setTimeout(() => void ctx.close(), synth.ms + 500)
 }

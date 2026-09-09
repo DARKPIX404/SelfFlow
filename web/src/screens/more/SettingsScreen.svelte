@@ -11,9 +11,11 @@
     setPin,
     verifyPin,
     clearPin,
-    ringtoneOptions,
+    alarmRingtoneOptions,
+    notificationSoundOptions,
     playRingtone,
     alarmSoundKey,
+    notificationSoundKey,
   } from '$lib/settings.svelte'
   import { rescheduleAlarms, requestRescheduleReminders } from '$lib/notifications'
   import { exportBackup, parseBackup, applyBackup, BackupError } from '$lib/backup'
@@ -46,22 +48,35 @@
     applyTheme(v ? 'light' : 'dark')
   }
 
-  // --- звук ---
-  let ringtone = $state(alarmSoundKey())
+  // --- звуки: будильник и уведомления — отдельные настройки ---
+  let alarmRingtone = $state(alarmSoundKey())
+  let notificationSound = $state(notificationSoundKey())
   let playing = $state<string | null>(null)
 
-  function pickRingtone(key: string) {
+  function pickAlarmSound(key: string) {
     haptic('light')
-    ringtone = key
+    alarmRingtone = key
     setSetting('alarm_sound', key)
-    playing = key
-    playRingtone(key)
+    playPreview(key)
     // перепланировать будильники/дайджест с новым звуком
     void rescheduleAlarms()
     requestRescheduleReminders()
+  }
+
+  function pickNotificationSound(key: string) {
+    haptic('light')
+    notificationSound = key
+    setSetting('notification_sound', key)
+    playPreview(key)
+    requestRescheduleReminders()
+  }
+
+  function playPreview(key: string) {
+    playing = key
+    playRingtone(key)
     setTimeout(() => {
       if (playing === key) playing = null
-    }, 1800)
+    }, 2500)
   }
 
   // --- PIN ---
@@ -249,14 +264,31 @@
     <!-- Звуки -->
     <h2 class="section-title">Звуки</h2>
     <section class="card">
-      <h3 class="card-label">Рингтон будильника</h3>
+      <h3 class="card-label">Звук будильника</h3>
+      <p class="card-sub">Будильник подъёма/отбоя поверх экрана</p>
       <div class="ring-list">
-        {#each ringtoneOptions as opt (opt.key)}
-          <button type="button" class="ring-opt" class:selected={ringtone === opt.key} onclick={() => pickRingtone(opt.key)}>
+        {#each alarmRingtoneOptions as opt (opt.key)}
+          <button type="button" class="ring-opt" class:selected={alarmRingtone === opt.key} onclick={() => pickAlarmSound(opt.key)}>
             <span>{opt.label}</span>
             {#if playing === opt.key}
               <span class="eq"><i></i><i></i><i></i></span>
-            {:else}
+            {:else if opt.key !== 'system'}
+              <Icon name="play" size={15} />
+            {/if}
+          </button>
+        {/each}
+      </div>
+    </section>
+    <section class="card">
+      <h3 class="card-label">Звук уведомлений</h3>
+      <p class="card-sub">Рутины, привычки и задачи</p>
+      <div class="ring-list">
+        {#each notificationSoundOptions as opt (opt.key)}
+          <button type="button" class="ring-opt" class:selected={notificationSound === opt.key} onclick={() => pickNotificationSound(opt.key)}>
+            <span>{opt.label}</span>
+            {#if playing === opt.key}
+              <span class="eq"><i></i><i></i><i></i></span>
+            {:else if opt.key !== 'system'}
               <Icon name="play" size={15} />
             {/if}
           </button>
@@ -445,6 +477,11 @@
     letter-spacing: 0.04em;
     color: var(--text-muted);
     margin-bottom: 10px;
+  }
+  .card-sub {
+    font-size: 12px;
+    color: var(--text-2);
+    margin: -6px 0 10px;
   }
   .ring-list {
     display: flex;

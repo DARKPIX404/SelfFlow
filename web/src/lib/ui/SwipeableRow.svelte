@@ -25,7 +25,7 @@
   let rowEl = $state<HTMLDivElement | null>(null)
   let rowW = $state(300)
 
-  const FULL_RATIO = 0.45 // доля ширины для «полного» раскрытия
+  const FULL_RATIO = 0.6 // доля ширины подложки для срабатывания действия
 
   let rightW = $derived(right ? Math.min(rowW * 0.32, 130) : 0)
   let leftW = $derived(left ? Math.min(rowW * 0.32, 130) : 0)
@@ -82,8 +82,8 @@
     }
     const thresholdRight = rightW * FULL_RATIO
     const thresholdLeft = leftW * FULL_RATIO
-    if (right && x > thresholdRight && x >= rightW * 0.8) {
-      // полное раскрытие вправо → действие
+    // полное раскрытие вправо → действие (порог 0.6 ширины подложки)
+    if (right && x >= thresholdRight) {
       x = rowW
       haptic('medium')
       setTimeout(() => {
@@ -92,7 +92,7 @@
       }, 140)
       return
     }
-    if (left && x < -thresholdLeft && x <= -leftW * 0.8) {
+    if (left && x <= -thresholdLeft) {
       x = -rowW
       haptic('medium')
       setTimeout(() => {
@@ -111,15 +111,17 @@
 <div class="swipe" bind:this={rowEl}>
   {#if right}
     <div class="under right" style="width: {Math.max(x, 0)}px">
-      <span class="u-icon" style="opacity: {Math.min(rightProgress * 2, 1)}; transform: scale({0.6 + rightProgress * 0.4})">
+      <span class="u-wrap" style="opacity: {Math.min(rightProgress * 2, 1)}; transform: scale({0.6 + rightProgress * 0.4})">
         <Icon name={right.icon} size={20} />
+        <span class="u-label">{right.label}</span>
       </span>
     </div>
   {/if}
   {#if left}
     <div class="under left" style="width: {Math.max(-x, 0)}px">
-      <span class="u-icon" style="opacity: {Math.min(leftProgress * 2, 1)}; transform: scale({0.6 + leftProgress * 0.4})">
+      <span class="u-wrap" style="opacity: {Math.min(leftProgress * 2, 1)}; transform: scale({0.6 + leftProgress * 0.4})">
         <Icon name={left.icon} size={20} />
+        <span class="u-label">{left.label}</span>
       </span>
     </div>
   {/if}
@@ -167,9 +169,17 @@
     color: var(--text);
     border-radius: 0 16px 16px 0;
   }
-  .u-icon {
+  .u-wrap {
     display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
     flex-shrink: 0;
+  }
+  .u-label {
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
   }
   .content {
     position: relative;
