@@ -103,3 +103,12 @@ export async function downloadAndInstall(): Promise<void> {
 export function dismissUpdate(): void {
   updateState.dismissed = true
 }
+
+/** Прямая ссылка на APK последнего релиза (для веб-версии: «Установить APK») */
+export async function getLatestApkUrl(): Promise<string> {
+  const res = await fetch(REPO_API, { headers: { Accept: 'application/vnd.github+json' } })
+  if (!res.ok) throw new Error(`GitHub API: ${res.status}`)
+  const info = parseRelease(await res.json())
+  if (!info) throw new Error('APK не найден в последнем релизе')
+  return info.url
+}

@@ -1,9 +1,13 @@
 <script lang="ts">
+  import { Capacitor } from '@capacitor/core'
   import { login, enterGuestMode } from '$lib/auth/session.svelte'
   import { syncAll } from '$lib/sync/sync'
   import AuthLayout from './AuthLayout.svelte'
   import TextField from '$lib/ui/TextField.svelte'
+  import Icon from '$lib/ui/Icon.svelte'
   import { navigate } from '$lib/nav.svelte'
+
+  const isNative = Capacitor.isNativePlatform()
 
   let email = $state('')
   let password = $state('')
@@ -73,6 +77,15 @@
     <button type="button" class="guest-btn" onclick={enterGuestMode}>Продолжить без аккаунта</button>
     <p class="guest-hint">Данные останутся только на этом устройстве, без синхронизации</p>
   </div>
+  {#if !isNative}
+    <div class="apk">
+      <a class="apk-btn" href="https://github.com/DARKPIX404/SelfFlow/releases/latest" target="_blank" rel="noopener">
+        <Icon name="download" size={17} />
+        Скачать приложение для Android (APK)
+      </a>
+      <p class="guest-hint">Устанавливается поверх — данные и вход сохраняются</p>
+    </div>
+  {/if}
 </AuthLayout>
 
 <style>
@@ -116,5 +129,31 @@
     font-size: 12px;
     color: var(--text-muted);
     text-align: center;
+  }
+  .apk {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .apk-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    border: 1px solid var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 14px;
+    padding: 12px 18px;
+    min-height: 48px;
+    text-decoration: none;
+  }
+  .apk-btn:active {
+    filter: brightness(1.15);
   }
 </style>
