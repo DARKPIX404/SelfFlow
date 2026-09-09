@@ -28,6 +28,8 @@
   import Dialog from '$lib/ui/Dialog.svelte'
   import { showToast } from '$lib/ui/toast.svelte'
   import { haptic } from '$lib/ui/haptics'
+  import { Updater } from '$lib/native/updater'
+  import { updateState, checkForUpdate } from '$lib/update.svelte'
 
   // --- аккаунт ---
   const isGuest = $derived(session.user?.id === GUEST_OWNER)
@@ -153,6 +155,21 @@
   function onPinInput(v: string) {
     pinValue = v.replace(/\D/g, '').slice(0, 8)
     pinError = ''
+  }
+
+  // --- обновление ---
+  let appVersion = $state('')
+
+  $effect(() => {
+    void Updater.getAppInfo().then((info) => {
+      appVersion = info.versionName
+      if (!updateState.currentVersion) updateState.currentVersion = info.versionName
+    })
+  })
+
+  function doCheckUpdate() {
+    haptic('light')
+    void checkForUpdate(true)
   }
 
   // --- бэкап ---
@@ -312,6 +329,23 @@
       </div>
       <button type="button" class="pill-btn" onclick={openPinDialog}>
         {pinEnabled() ? 'Изменить' : 'Включить'}
+      </button>
+    </section>
+
+    <!-- Обновление -->
+    <h2 class="section-title">Обновление</h2>
+    <section class="card row">
+      <div class="row-texts">
+        <h3>Версия приложения</h3>
+        <p>{appVersion || '…'}</p>
+      </div>
+      <button
+        type="button"
+        class="pill-btn"
+        onclick={doCheckUpdate}
+        disabled={updateState.checking || updateState.downloading}
+      >
+        {updateState.checking ? 'Проверка…' : 'Проверить обновления'}
       </button>
     </section>
 

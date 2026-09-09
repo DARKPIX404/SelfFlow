@@ -52,6 +52,10 @@ async function start(): Promise<void> {
   )
   initNotifications()
 
+  // in-app обновление: тихая проверка при старте (только нативная сборка)
+  const { checkForUpdate } = await import('./lib/update.svelte')
+  void checkForUpdate()
+
   // отладочный доступ к состоянию синка и очереди (e2e-дым, поддержка)
   const { getDb } = await import('./lib/db')
   const { pb } = await import('./lib/auth/pb')

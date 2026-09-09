@@ -6,6 +6,7 @@
   import { haptic } from '$lib/ui/haptics'
   import BottomTabBar from '$lib/ui/BottomTabBar.svelte'
   import Toast from '$lib/ui/Toast.svelte'
+  import UpdateDialog from '$lib/ui/UpdateDialog.svelte'
   import LoginScreen from './screens/auth/LoginScreen.svelte'
   import RegisterScreen from './screens/auth/RegisterScreen.svelte'
   import TodayScreen from './screens/today/TodayScreen.svelte'
@@ -111,6 +112,7 @@
   {/if}
 {/if}
 <Toast />
+<UpdateDialog />
 
 <style>
   .shell {
