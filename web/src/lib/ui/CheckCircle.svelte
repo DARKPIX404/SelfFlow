@@ -10,7 +10,8 @@
 
   let { checked, onclick, size = 24, ariaLabel }: Props = $props()
 
-  function handle() {
+  function handle(e: MouseEvent) {
+    e.stopPropagation()
     haptic(checked ? 'light' : 'medium')
     onclick?.()
   }

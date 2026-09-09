@@ -92,7 +92,12 @@
         role="menuitem"
         class="item"
         class:danger={item.danger}
-        onclick={() => select(item.value)}
+        onclick={(e) => {
+          // без stopPropagation клик после размонтирования меню всплывёт
+          // по отсоединённой цепочке до карточки и откроет её редактор
+          e.stopPropagation()
+          select(item.value)
+        }}
       >
         {#if item.icon}
           <Icon name={item.icon} size={19} />

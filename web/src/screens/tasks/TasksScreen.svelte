@@ -40,8 +40,9 @@
     { value: 'LOW', label: 'Низкий' },
   ] as const
 
-  type MenuAction = 'progress' | 'todo' | 'reschedule' | 'delete'
+  type MenuAction = 'edit' | 'progress' | 'todo' | 'reschedule' | 'delete'
   const menuItems: MenuItem<MenuAction>[] = [
+    { label: 'Изменить', icon: 'pencil', value: 'edit' },
     { label: 'В работу', icon: 'play', value: 'progress' },
     { label: 'К выполнению', icon: 'clock', value: 'todo' },
     { label: 'Изменить срок', icon: 'calendar-clock', value: 'reschedule' },
@@ -127,7 +128,8 @@
   }
 
   function onMenu(action: MenuAction, t: Task) {
-    if (action === 'progress') setStatus(t, 'IN_PROGRESS')
+    if (action === 'edit') openEdit(t)
+    else if (action === 'progress') setStatus(t, 'IN_PROGRESS')
     else if (action === 'todo') setStatus(t, 'TODO')
     else if (action === 'reschedule') rescheduleTarget = t
     else requestDelete(t)
@@ -243,6 +245,7 @@
                   title={t.title}
                   subtitle={t.description ?? (t.due_date ? 'Срок: ' + fmtDateShort(t.due_date.slice(0, 10)) : null)}
                   done={t.status === 'DONE'}
+                  onclick={() => openEdit(t)}
                 >
                   {#snippet leading()}
                     <CheckCircle
